@@ -1,7 +1,5 @@
 #include "tft_t_dma.h"
 
-#if defined(ILI9341) || defined(ST7789)
-
 #include "tft_font8x8.h"
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
@@ -14,12 +12,10 @@
 #define digitalWrite(pin, val) gpio_put(pin, val)
 
 #define SPICLOCK 60000000
-#ifdef ST7789
 #ifdef ST7789_POL
 #define SPI_MODE SPI_CPOL_0
 #else
 #define SPI_MODE SPI_CPOL_1
-#endif
 #endif
 #ifdef ILI9341
 #define SPI_MODE SPI_CPOL_0
@@ -40,36 +36,12 @@ static void SPItransfer16(uint16_t val)
   spi_write_blocking(TFT_SPIREG, dat8, 2);
 }
 
+namespace
+{
+  const uint8_t DELAY = 0x80;
+}
+
 static const uint8_t init_commands[] = {
-#ifdef ILI9341
-  4, 0xEF, 0x03, 0x80, 0x02,
-  4, 0xCF, 0x00, 0XC1, 0X30,
-  5, 0xED, 0x64, 0x03, 0X12, 0X81,
-  4, 0xE8, 0x85, 0x00, 0x78,
-  6, 0xCB, 0x39, 0x2C, 0x00, 0x34, 0x02,
-  2, 0xF7, 0x20,
-  3, 0xEA, 0x00, 0x00,
-  2, ILI9341_PWCTR1, 0x23, // Power control
-  2, ILI9341_PWCTR2, 0x10, // Power control
-  3, ILI9341_VMCTR1, 0x3e, 0x28, // VCM control
-  2, ILI9341_VMCTR2, 0x86, // VCM control2
-  2, ILI9341_MADCTL, 0x48, // Memory Access Control
-  2, ILI9341_PIXFMT, 0x55,
-  3, ILI9341_FRMCTR1, 0x00, 0x18,
-  4, ILI9341_DFUNCTR, 0x08, 0x82, 0x27, // Display Function Control
-  2, 0xF2, 0x00, // Gamma Function Disable
-  2, ILI9341_GAMMASET, 0x01, // Gamma curve selected
-  16, ILI9341_GMCTRP1, 0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08,
-  0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00, // Set Gamma
-  16, ILI9341_GMCTRN1, 0x00, 0x0E, 0x14, 0x03, 0x11, 0x07,
-  0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F, // Set Gamma
-//  3, 0xb1, 0x00, 0x1f, // FrameRate Control 61Hz
-  3, 0xb1, 0x00, 0x10, // FrameRate Control 119Hz
-  2, ILI9341_MADCTL, ILI9341_MADCTL_MX | ILI9341_MADCTL_MY | ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR,
-  0
-#endif
-#ifdef ST7789
-#define DELAY 0x80
     9,                       // 9 commands in list:
     ST7735_SWRESET,   DELAY,  //  1: Software reset, no args, w/delay
       150,                     //    150 ms delay
@@ -96,19 +68,18 @@ static const uint8_t init_commands[] = {
       10,                     //     10 ms delay
     ST7735_DISPON ,   DELAY,  // 9: Main screen turn on, no args, w/delay
     255
-#endif
 };
 
 
-TFT_T_DMA::TFT_T_DMA()
-{
-  _cs   = TFT_CS;
-  _dc   = TFT_DC;
-  _rst  = TFT_RST;
-  _mosi = TFT_MOSI;
-  _sclk = TFT_SCLK;
+TFT_T_DMA::TFT_T_DMA() :
+  _cs(TFT_CS),
+  _dc(TFT_DC),
+  _rst(TFT_RST),
+  _mosi(TFT_MOSI),
+  _sclk(TFT_SCLK),
   //_miso = TFT_MISO;
-  _bkl = TFT_BACKLIGHT;
+  _bkl(TFT_BACKLIGHT)
+{
   gpio_init(_dc);
   gpio_set_dir(_dc, GPIO_OUT);
   gpio_init(_cs);
@@ -126,7 +97,6 @@ TFT_T_DMA::TFT_T_DMA()
 void TFT_T_DMA::setArea(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2) {
   int dx=0;
   int dy=0;
-#ifdef ST7789
   if (TFT_REALWIDTH == TFT_REALHEIGHT)
   {
 #ifdef ROTATE_SCREEN
@@ -139,7 +109,6 @@ void TFT_T_DMA::setArea(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2) {
     }
 #endif
   }
-#endif
 
   digitalWrite(_dc, 0);
   SPItransfer(TFT_CASET);
@@ -183,35 +152,6 @@ void TFT_T_DMA::begin(void) {
 
   const uint8_t *addr = init_commands;
   digitalWrite(_cs, 0);
-#ifdef ILI9341
-  while (1) {
-    uint8_t count = *addr++;
-    if (count-- == 0) break;
-
-    digitalWrite(_dc, 0);
-    SPItransfer(*addr++);
-
-    while (count-- > 0) {
-      digitalWrite(_dc, 1);
-      SPItransfer(*addr++);
-    }
-  }
-
-  digitalWrite(_dc, 0);
-  SPItransfer(ILI9341_SLPOUT);
-  digitalWrite(_dc, 1);
-  digitalWrite(_cs, 1);
-
-  digitalWrite(_dc, 1);
-  digitalWrite(_cs, 1);
-
-  digitalWrite(_dc, 0);
-  digitalWrite(_cs, 0);
-  SPItransfer(ILI9341_DISPON);
-  digitalWrite(_dc, 1);
-  digitalWrite(_cs, 1);
-#endif
-#ifdef ST7789
   uint8_t  numCommands, numArgs;
   uint16_t ms;
   numCommands = *addr++;    // Number of commands to follow
@@ -242,7 +182,6 @@ void TFT_T_DMA::begin(void) {
     }
   }
   digitalWrite(_cs, 1);
-#endif
   setArea(0, 0, TFT_REALWIDTH-1, TFT_REALHEIGHT-1);
 
 #ifdef FLIP_SCREEN
@@ -250,12 +189,10 @@ void TFT_T_DMA::begin(void) {
 #else
   flipscreen(false);
 #endif
-#ifdef ST7789
   if (TFT_REALWIDTH != TFT_REALHEIGHT)
   {
     //flipscreen(true);
   }
-#endif
 };
 
 void TFT_T_DMA::flipscreen(bool flip)
@@ -266,28 +203,18 @@ void TFT_T_DMA::flipscreen(bool flip)
   digitalWrite(_dc, 1);
   if (flip) {
     flipped=true;
-#ifdef ILI9341
-    SPItransfer(ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR);
-#endif
-#ifdef ST7789
 #ifdef ROTATE_SCREEN
     SPItransfer(ST77XX_MADCTL_RGB);
 #else
     SPItransfer(ST77XX_MADCTL_MY | ST77XX_MADCTL_MV |ST77XX_MADCTL_RGB);
 #endif
-#endif
   }
   else {
     flipped=false;
-#ifdef ILI9341
-    SPItransfer(ILI9341_MADCTL_MX | ILI9341_MADCTL_MY | ILI9341_MADCTL_MV | ILI9341_MADCTL_BGR);
-#endif
-#ifdef ST7789
 #ifdef ROTATE_SCREEN
     SPItransfer(ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB);
 #else
     SPItransfer(ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB);
-#endif
 #endif
   }
   digitalWrite(_cs, 1);
@@ -526,7 +453,6 @@ void TFT_T_DMA::drawTextNoDma(int16_t x, int16_t y, const char * text, uint16_t 
 /***********************************************************************************************
     DMA functions
  ***********************************************************************************************/
-#ifndef USE_VGA
 
 #ifdef TFT_STATICFB
 static uint16_t fb0[LINES_PER_BLOCK*TFT_WIDTH]; //__attribute__ ((aligned(2048)));
@@ -666,17 +592,7 @@ void TFT_T_DMA::stopDMA(void) {
   digitalWrite(_cs, 1);
   // we switch to 8bit mode!!
   //spi_set_format(TFT_SPIREG, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-//#ifdef ST7789
   begin();
-//#endif
-//#ifdef ILI9341
-//  SPI.begin();
-//  digitalWrite(_cs, 0);
-//  SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
-//  SPI.endTransaction();
-//  digitalWrite(_cs, 1);
-//  digitalWrite(_dc, 1);
-//#endif
   setArea(0, 0, TFT_REALWIDTH-1, TFT_REALHEIGHT-1);
 }
 
@@ -1086,7 +1002,7 @@ static void AUDIO_isr() {
 static void core1_sio_irq() {
   irq_clear(SIO_IRQ_PROC1);
   while(multicore_fifo_rvalid()) {
-    uint16_t raw = multicore_fifo_pop_blocking();
+    /*uint16_t raw =*/ multicore_fifo_pop_blocking();
     SOFTWARE_isr();
   }
   multicore_fifo_clear_irq();
@@ -1155,6 +1071,4 @@ void TFT_T_DMA::end_audio()
     free(i2s_tx_buffer);
   }
 }
-#endif
 
-#endif

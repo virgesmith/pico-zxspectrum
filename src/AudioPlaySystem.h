@@ -1,26 +1,20 @@
-#ifndef audioplaysystem_h_
-#define audioplaysystem_h_
+#pragma once
 
-#ifdef HAS_SND
-
-#include "platform_config.h"
-
+// TODO this could be a singleton
 class AudioPlaySystem
 {
 public:
-  AudioPlaySystem(void) { };
-  void begin(void);
+  AudioPlaySystem() { };
+  void begin();
   void setSampleParameters(float clockfreq, float samplerate);
-  void reset(void);
-  void start(void);
-  void stop(void);
-  bool isPlaying(void);
-  void sound(int C, int F, int V);    
+  void reset();
+  void start();
+  void stop();
+  bool isPlaying();
+  void sound(int C, int F, int V);
   void buzz(int size, int val);
-  void step(void);
-  static void snd_Mixer(short *  stream, int len );  
+  void step();
+  static void snd_Mixer(short* stream, int len);
 };
 
-#endif
 
-#endif

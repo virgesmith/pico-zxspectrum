@@ -1,11 +1,7 @@
 #ifndef EMUAPI_H
 #define EMUAPI_H
 
-#include "platform_config.h"
-
-//#define TIMER_REND  1
 #define EXTRA_HEAP  0x10
-//#define CUSTOM_SND  1
 
 
 // Title:     <                        >
@@ -150,7 +146,7 @@ extern void emu_sndInit();
 extern void emu_resetus(void);
 extern int emu_us(void);
 
-extern int emu_setKeymap(int index);
+//extern int emu_setKeymap(int index);
 
 extern void emu_FileTempInit(void);
 extern void emu_FileTempRead(int addr, unsigned char * val, int n);

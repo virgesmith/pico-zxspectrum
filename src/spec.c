@@ -1,9 +1,7 @@
 #include "Z80.h"
-#include "spectrum.rom.h"
+#include "spectrum_rom.h"
 #include "emuapi.h"
 #include "zx_filetyp_z80.h"
-
-#include "AY8910.h"
 
 #include <string.h>
 
@@ -101,7 +99,7 @@ static int ik;
 static int ihk;
 
 void spec_Input(int bClick) {
-  ik  = emu_GetPad();
+  //ik  = emu_GetPad();
   //ihk = emu_ReadI2CKeyboard();
   ihk = emu_ReadUsbSerial();
 
@@ -173,19 +171,16 @@ static void displayScreen(void) {
 }
 
 
-#ifdef HAS_SND
 #ifdef CUSTOM_SND
 #define SAMSIZE 32768
 static unsigned char sam[SAMSIZE];
 static int rdsam=0;
 static int wrsam=SAMSIZE/2;
 #endif
-#endif
 
 static int lastBuzzCycle=0;
-static byte lastBuzzVal;
+//static byte lastBuzzVal;
 
-#ifdef HAS_SND
 #ifdef CUSTOM_SND
 void  SND_Process( short * stream, int len )
 {
@@ -199,7 +194,6 @@ void  SND_Process( short * stream, int len )
       *stream++ = (short)(s);
     }
 }
-#endif
 #endif
 
 
@@ -260,28 +254,16 @@ void emu_KeyboardOnUp(int keymodifer, int key) {
 void spec_Start(char * filename) {
 
   if (!filename) {
-    #include "zxspectrum48rom.inl" // defines zxspectrum48rom
-    ZX_ReadFromFlash_Z80(&myCPU, zxspectrum48rom, sizeof(zxspectrum48rom) / sizeof(unsigned char));
+    ZX_ReadFromFlash_Z80(&myCPU, ZX48_ROM, 16384);
   }
 
   memset(Z80_RAM, 0, 0xC000);
-  // if ( (endsWith(filename, "SNA")) || (endsWith(filename, "sna")) ) {
-  //   ZX_ReadFromFlash_SNA(&myCPU, filename);
-  // }
-  // else if ( (endsWith(filename, "Z80")) || (endsWith(filename, "z80")) ) {
-  //   unsigned char * game = emu_Malloc(MAX_Z80SIZE);
-  //   int size = emu_LoadFile(filename, game, MAX_Z80SIZE);
-  //   ZX_ReadFromFlash_Z80(&myCPU, game,size);
-  //   emu_Free(game);
-  // }
-#ifdef HAS_SND
   emu_sndInit();
-#endif
 }
 
 
 
-static AY8910 ay;
+//static AY8910 ay;
 
 void spec_Init(void) {
   int J;
@@ -291,7 +273,7 @@ void spec_Init(void) {
 
   InitKeyboard();
 
-  Reset8910(&ay,3500000,0);
+  //Reset8910(&ay,3500000,0);
 
 
   if (scanline_buffer == NULL) scanline_buffer = (byte *)emu_Malloc(SCREEN_WIDTH);
@@ -312,10 +294,8 @@ void spec_Step(void) {
   for (scanl = 0; scanl < NBLINES; scanl++) {
     lastBuzzCycle=0;
     ExecZ80(&myCPU,CYCLES_PER_STEP); // 3.5MHz ticks for 6 lines @ 30 kHz = 700 cycles
-#ifdef HAS_SND
 #ifdef CUSTOM_SND
     buzz(lastBuzzVal, CYCLES_PER_STEP);
-#endif
 #endif
     //busy_wait_us(1);
     //sleep_us(1);
@@ -345,7 +325,7 @@ void spec_Step(void) {
 
   UpdateKeyboard();
 
-  Loop8910(&ay,20);
+  //Loop8910(&ay,20);
 }
 
 
@@ -359,12 +339,12 @@ void WrZ80(register word Addr,register byte Value)
     Z80_RAM[Addr-BASERAM]=Value;
 }
 
-byte RdZ80(register word Addr)
+byte RdZ80(register word addr)
 {
-  if (Addr<BASERAM)
-    return rom_zx48_rom[Addr];
+  if (addr<BASERAM)
+    return ZX48_ROM[addr];
   else
-    return Z80_RAM[Addr-BASERAM];
+    return Z80_RAM[addr-BASERAM];
 }
 
 
@@ -372,7 +352,6 @@ byte RdZ80(register word Addr)
 void buzz(int val, int currentTstates)
 {
   int pulse_size = (currentTstates-lastBuzzCycle);
-#ifdef HAS_SND
 #ifdef CUSTOM_SND
   for (int i = 0; i<pulse_size; i++ ) {
     sam[wrsam] = lastBuzzVal?0:1;
@@ -385,20 +364,19 @@ void buzz(int val, int currentTstates)
 #else
   emu_sndPlayBuzz(pulse_size,val);
 #endif
-#endif
 }
 
 void OutZ80(register word Port,register byte Value)
 {
-  if ((Port & 0xC002) == 0xC000) {
+/*  if ((Port & 0xC002) == 0xC000) {
     WrCtrl8910(&ay,(Value &0x0F));
   }
   else if ((Port & 0xC002) == 0x8000) {
     WrData8910(&ay,Value);
   }
-  else if (!(Port & 0x01)) {
+  else*/ if (!(Port & 0x01)) {
     bordercolor = (Value & 0x07);
-    byte mic = (Value & 0x08);
+    //byte mic = (Value & 0x08);
     byte ear = (Value & 0x10);
     buzz(((ear)?1:0), CYCLES_PER_STEP-myCPU.ICount);
   }
@@ -409,9 +387,9 @@ void OutZ80(register word Port,register byte Value)
 
 byte InZ80(register word port)
 {
-    if (port == 0xFFFD) {
-      return (RdData8910(&ay));
-    }
+    // if (port == 0xFFFD) {
+    //   return (RdData8910(&ay));
+    // }
 
     if((port&0xFF)==0x1F) {
         // kempston RAM
@@ -449,11 +427,3 @@ void PatchZ80(register Z80 *R)
 {
   // nothing to do
 }
-
-/*
-word LoopZ80(register Z80 *R)
-{
-  // no interrupt triggered
-  return INT_NONE;
-}
-*/

@@ -1,4 +1,6 @@
-extern void spec_Init(void);
-extern void spec_Step(void);
-extern void spec_Start(char * filename);
-extern void spec_Input(int bClick);
+#pragma once
+
+void spec_Init(void);
+void spec_Step(void);
+void spec_Start(char * filename);
+void spec_Input(int bClick);
