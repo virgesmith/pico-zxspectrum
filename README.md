@@ -12,10 +12,10 @@ So for old times' sake here's a ZX Spectrum emulator for Raspberry Pi pico.
 
 ## Status
 
-[X] display: fully operational
-[x] keyboard: serial works using python client (apart from extended mode)
-[ ] sound
-[ ] cassette recorder
+- [X] display: fully operational
+- [x] keyboard: serial works using python client (apart from extended mode)
+- [ ] sound
+- [ ] cassette recorder
 
 ![boot](./doc/boot.jpg)
 ![code](./doc/code.jpg)
