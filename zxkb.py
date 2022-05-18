@@ -102,6 +102,23 @@ keymap = {
   # Sym shift
   Key.space: 44 + CAPS_MASK, # break
 
+  # for convenience
+  Key.caps_lock: 31 + CAPS_MASK,
+  KeyCode(char=","): 17 + SYM_MASK,
+  KeyCode(char="."): 16 + SYM_MASK,
+  KeyCode(char="<"): 21 + SYM_MASK,
+  KeyCode(char=">"): 23 + SYM_MASK,
+  KeyCode(char="?"): 6 + SYM_MASK,
+  KeyCode(char="/"): 25 + SYM_MASK,
+  KeyCode(char=";"): 18 + SYM_MASK,
+  KeyCode(char=":"): 29 + SYM_MASK,
+
+  KeyCode(char="-"): 13 + SYM_MASK,
+  KeyCode(char="="): 15 + SYM_MASK,
+  KeyCode(char="_"): 39 + SYM_MASK,
+  KeyCode(char="+"): 14 + SYM_MASK,
+
+
   # extended mode test
   Key.tab: CAPS_MASK + SYM_MASK,
 }
@@ -121,12 +138,8 @@ def on_press(key: Key):
     code = keymap.get(key, 0)
     if sym:
       code += SYM_MASK
-    print(f'{"shift-" if caps else ""}{"sym-" if sym else ""}{key} -> {code}')
+    # print(f'{"shift-" if caps else ""}{"sym-" if sym else ""}{key} -> {code}')
     device.write(code.to_bytes(1, byteorder='little'))
-  # if caps and sym:
-  #   print("ext?")
-  #   #device.write((CAPS_MASK + SYM_MASK).to_bytes(1, byteorder='little'))
-  #   #device.write(SYM_SHIFT.to_bytes(1, byteorder='little'))
 
 
 def on_release(key: Key):
