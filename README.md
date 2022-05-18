@@ -2,8 +2,7 @@
 
 It's been 40 years... I still remember the computery smell when I unboxed mine at Xmas (I *think* 1983)
 
-So for old times' sake here's a ZX Spectrum emulator for Raspberry Pi pico.
-, using:
+So for old times' sake here's a ZX Spectrum emulator for Raspberry Pi pico, using:
 - screen: a 5cm 320x240 TFT display as screen.
 - keyboard: USB serial connection for now
 - sound: not sure yet
@@ -12,10 +11,10 @@ So for old times' sake here's a ZX Spectrum emulator for Raspberry Pi pico.
 
 ## Status
 
-[X] display: fully operational
-[X] keyboard: serial works using a basic python client
-[ ] sound
-[ ] cassette recorder
+- [X] display: fully operational
+- [X] keyboard: serial works using a basic python client
+- [ ] sound
+- [ ] cassette recorder
 
 ![boot](./doc/boot.jpg)
 ![code](./doc/code.jpg)
