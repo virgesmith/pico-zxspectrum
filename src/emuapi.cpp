@@ -42,6 +42,7 @@ extern TFT_T_DMA tft;
 #define MENU_VGA_XOFFSET    (MENU_FILE_XOFFSET+MENU_FILE_W+8)
 #define MENU_VGA_YOFFSET    (MENU_VBAR_YOFFSET+MENU_FILE_H-32-37)
 
+
 static unsigned char keymatrix[6];
 static int keymatrix_hitrow=-1;
 static bool key_fn=false;
@@ -434,16 +435,16 @@ unsigned char emu_ReadUsbSerial(void) {
 void emu_init(void)
 {
 
-  int keypressed = emu_ReadKeys();
-  // Flip screen if UP pressed
-  if (keypressed & MASK_JOY2_UP)
-  {
-    tft.flipscreen(true);
-  }
-  else
-  {
-    tft.flipscreen(false);
-  }
+  // int keypressed = emu_ReadKeys();
+  // // Flip screen if UP pressed
+  // if (keypressed & MASK_JOY2_UP)
+  // {
+  //   tft.flipscreen(true);
+  // }
+  // else
+  // {
+  //   tft.flipscreen(false);
+  // }
 }
 
 

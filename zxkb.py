@@ -1,3 +1,4 @@
+from tkinter.tix import Tree
 from pynput.keyboard import Key, KeyCode, Listener
 from serial import Serial
 from pathlib import Path
@@ -101,20 +102,21 @@ keymap = {
   # Sym shift
   Key.space: 44 + CAPS_MASK, # break
 
-  # # testing
-  KeyCode(char='-'): 56,
-  KeyCode(char='='): 57,
-  KeyCode(char='['): 58,
-  KeyCode(char=']'): 59,
+  # extended mode test
+  Key.tab: CAPS_MASK + SYM_MASK,
 }
 
 def on_press(key: Key):
   print(key)
   global caps, sym
+  if key == Key.esc:
+    exit(0)
   if key == Key.shift:
     caps = True
   elif key == Key.ctrl_r:
     sym = True
+    if caps and sym:
+      device.write((CAPS_MASK + SYM_MASK).to_bytes(1, byteorder='little'))
   else:
     code = keymap.get(key, 0)
     if sym:
@@ -141,7 +143,8 @@ if not Path(DEVICE).exists:
 
 device = Serial(DEVICE, BAUD_RATE)
 
-with Listener(on_press=on_press, on_release=on_release) as listener:
+with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
+  print(device.read())
   listener.join()
 
 

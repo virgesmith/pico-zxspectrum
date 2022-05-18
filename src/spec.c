@@ -114,7 +114,7 @@ void displayscanline(int y, int f_flash)
     memset(scanline_buffer, bordercolor, SCREEN_WIDTH);
     emu_DrawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
     return;
-  }           // 32+256+32=320  4+192+4=200  (res=320x200)
+  }
 
   memset(scanline_buffer, bordercolor, HBORDER);
   col += HBORDER;
@@ -205,26 +205,21 @@ static void UpdateKeyboard (void)
 {
   //int k = ik; //emu_GetPad();
   int hk = ihk; //emu_ReadI2CKeyboard();
-  //if ( hk == 0 )  {
+
   memset(key_ram, 0xff, sizeof(key_ram));
-  //}
-  //else
-  {
-    //if (k & MASK_KEY_USER1) hk = 39;
-    int shift = hk;
-    if (hk >=128) hk -= 128;
-    else if (hk >=64) hk -= 64;
-    // scan all possibilities
-    for (int j=0;j<8;j++) {
-      for(int i=0;i<5;i++){
-        if ( /*(k == map_qw[j][i]) ||*/ (hk == map_qw[j][i]) ) {
-            key_ram[j] &= ~ (1<<(4-i));
-        }
+  int shift = hk;
+  if (hk >=128) hk -= 128;
+  else if (hk >=64) hk -= 64;
+  // scan all possibilities
+  for (int j=0;j<8;j++) {
+    for(int i=0;i<5;i++){
+      if ( /*(k == map_qw[j][i]) ||*/ (hk == map_qw[j][i]) ) {
+          key_ram[j] &= ~ (1<<(4-i));
       }
     }
-    if (shift >=128) key_ram[0] &= ~ (1<<0);  // SHift
-    else if (shift >=64) key_ram[7] &= ~ (1<<1);  // SHift symboles
   }
+  if (shift & (1<<7)) key_ram[0] &= ~(1<<0);  // caps shift
+  if (shift & (1<<6)) key_ram[7] &= ~(1<<1);  // symbol shift
 }
 
 
@@ -287,7 +282,6 @@ void spec_Init(void) {
 #endif
 }
 
-#include "emuapi.h"
 
 void spec_Step(void) {
   int scanl;
@@ -379,9 +373,13 @@ void OutZ80(register word Port,register byte Value)
     //byte mic = (Value & 0x08);
     byte ear = (Value & 0x10);
     buzz(((ear)?1:0), CYCLES_PER_STEP-myCPU.ICount);
+    // TODO check if anything appears over serial....
+    //printf("%c", Value);
   }
   else if((Port&0xFF)==0xFE) {
     out_ram=Value; // update it
+    // TODO check if anything appears over serial....
+    //printf("%c", Value);
   }
 }
 
