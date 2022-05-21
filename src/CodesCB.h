@@ -58,7 +58,7 @@ case SRL_D: M_SRL(R->DE.B.h);break;  case SRL_E: M_SRL(R->DE.B.l);break;
 case SRL_H: M_SRL(R->HL.B.h);break;  case SRL_L: M_SRL(R->HL.B.l);break;
 case SRL_xHL: I=RdZ80(R->HL.W);M_SRL(I);WrZ80(R->HL.W,I);break;
 case SRL_A: M_SRL(R->AF.B.h);break;
-    
+
 case BIT0_B: M_BIT(0,R->BC.B.h);break;  case BIT0_C: M_BIT(0,R->BC.B.l);break;
 case BIT0_D: M_BIT(0,R->DE.B.h);break;  case BIT0_E: M_BIT(0,R->DE.B.l);break;
 case BIT0_H: M_BIT(0,R->HL.B.h);break;  case BIT0_L: M_BIT(0,R->HL.B.l);break;

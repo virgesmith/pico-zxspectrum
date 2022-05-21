@@ -1,3 +1,4 @@
+#include "emuapi.h"
 
 #include "pico.h"
 #include "pico/stdlib.h"
@@ -6,7 +7,6 @@
 #include <string.h>
 
 extern "C" {
-  #include "emuapi.h"
   #include "iopins.h"
 }
 
@@ -428,23 +428,18 @@ unsigned char emu_ReadUsbSerial(void) {
 // int emu_setKeymap(int index) {
 // }
 
+static int skip = 0;
+volatile bool vbl = true;
+
+
+static unsigned char palette8[PALETTE_SIZE];
+static unsigned short palette16[PALETTE_SIZE];
 
 /********************************
  * Initialization
 ********************************/
 void emu_init(void)
 {
-
-  // int keypressed = emu_ReadKeys();
-  // // Flip screen if UP pressed
-  // if (keypressed & MASK_JOY2_UP)
-  // {
-  //   tft.flipscreen(true);
-  // }
-  // else
-  // {
-  //   tft.flipscreen(false);
-  // }
 }
 
 
@@ -454,3 +449,69 @@ void emu_start(void)
 
   keyMap = 0;
 }
+
+
+void emu_SetPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int index)
+{
+    if (index < PALETTE_SIZE)
+    {
+        palette8[index] = RGBVAL8(r, g, b);
+        palette16[index] = RGBVAL16(r, g, b);
+    }
+}
+
+void emu_DrawVsync(void)
+{
+    skip += 1;
+    skip &= VID_FRAME_SKIP;
+    volatile bool vb = vbl;
+    while (vbl == vb)
+    {
+    };
+}
+
+void emu_DrawLine(unsigned char *VBuf, int width, int height, int line)
+{
+    if (skip == 0)
+    {
+        tft.writeLine(width, height, line, VBuf, palette16);
+    }
+}
+
+int emu_FrameSkip(void)
+{
+    return skip;
+}
+
+void* emu_LineBuffer(int line)
+{
+    return (void *)tft.getLineBuffer(line);
+}
+
+#include "AudioPlaySystem.h"
+AudioPlaySystem mymixer;
+#include "hardware/pwm.h"
+void emu_sndInit()
+{
+    tft.begin_audio(256, mymixer.snd_Mixer);
+    mymixer.start();
+    // gpio_init(AUDIO_PIN);
+    // gpio_set_dir(AUDIO_PIN, GPIO_OUT);
+}
+
+void emu_sndPlaySound(int chan, int volume, int freq)
+{
+    if (chan < 6)
+    {
+        mymixer.sound(chan, freq, volume);
+    }
+}
+
+void emu_sndPlayBuzz(int size, int val)
+{
+#ifndef CUSTOM_SND
+    // gpio_put(AUDIO_PIN, (val?1:0));
+    pwm_set_gpio_level(AUDIO_PIN, (val ? 255 : 128));
+#endif
+}
+

@@ -122,7 +122,7 @@ case CP_L:     M_CP(R->HL.B.l);break;
 case CP_A:     R->AF.B.l=N_FLAG|Z_FLAG;break;
 case CP_xHL:   I=RdZ80(R->HL.W);M_CP(I);break;
 case CP_BYTE:  I=OpZ80(R->PC.W++);M_CP(I);break;
-               
+
 case LD_BC_WORD: M_LDWORD(BC);break;
 case LD_DE_WORD: M_LDWORD(DE);break;
 case LD_HL_WORD: M_LDWORD(HL);break;
@@ -179,7 +179,7 @@ case RLA:
 case RRCA:
   I=R->AF.B.h&0x01;
   R->AF.B.h=(R->AF.B.h>>1)|(I? 0x80:0);
-  R->AF.B.l=(R->AF.B.l&~(C_FLAG|N_FLAG|H_FLAG))|I; 
+  R->AF.B.l=(R->AF.B.l&~(C_FLAG|N_FLAG|H_FLAG))|I;
   break;
 case RRA:
   I=R->AF.B.h&0x01;
@@ -250,8 +250,8 @@ case EXX:
   break;
 
 case EX_DE_HL: J.W=R->DE.W;R->DE.W=R->HL.W;R->HL.W=J.W;break;
-case EX_AF_AF: J.W=R->AF.W;R->AF.W=R->AF1.W;R->AF1.W=J.W;break;  
-  
+case EX_AF_AF: J.W=R->AF.W;R->AF.W=R->AF1.W;R->AF1.W=J.W;break;
+
 case LD_B_B:   R->BC.B.h=R->BC.B.h;break;
 case LD_C_B:   R->BC.B.l=R->BC.B.h;break;
 case LD_D_B:   R->DE.B.h=R->BC.B.h;break;
@@ -351,7 +351,7 @@ case LD_HL_xWORD:
 
 case LD_A_xWORD:
   J.B.l=OpZ80(R->PC.W++);
-  J.B.h=OpZ80(R->PC.W++); 
+  J.B.h=OpZ80(R->PC.W++);
   R->AF.B.h=RdZ80(J.W);
   break;
 

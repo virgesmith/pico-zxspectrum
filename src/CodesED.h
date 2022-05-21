@@ -272,13 +272,13 @@ case CPIR:
     I=RdZ80(R->HL.W++);
     J.B.l=R->AF.B.h-I;
     --R->BC.W;R->ICount-=21;
-  }  
+  }
   while(R->BC.W&&J.B.l&&(R->ICount>0));
   R->AF.B.l =
     N_FLAG|(R->AF.B.l&C_FLAG)|ZSTable[J.B.l]|
     ((R->AF.B.h^I^J.B.l)&H_FLAG)|(R->BC.W? P_FLAG:0);
   if(R->BC.W&&J.B.l) R->PC.W-=2; else R->ICount+=5;
-  break;  
+  break;
 
 case CPD:
   I=RdZ80(R->HL.W--);

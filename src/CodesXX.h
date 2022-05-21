@@ -130,7 +130,7 @@ case CP_A:     R->AF.B.l=N_FLAG|Z_FLAG;break;
 case CP_xHL:   I=RdZ80(R->XX.W+(offset)OpZ80(R->PC.W++));
                M_CP(I);break;
 case CP_BYTE:  I=OpZ80(R->PC.W++);M_CP(I);break;
-               
+
 case LD_BC_WORD: M_LDWORD(BC);break;
 case LD_DE_WORD: M_LDWORD(DE);break;
 case LD_HL_WORD: M_LDWORD(XX);break;
@@ -262,8 +262,8 @@ case EXX:
   break;
 
 case EX_DE_HL: J.W=R->DE.W;R->DE.W=R->HL.W;R->HL.W=J.W;break;
-case EX_AF_AF: J.W=R->AF.W;R->AF.W=R->AF1.W;R->AF1.W=J.W;break;  
-  
+case EX_AF_AF: J.W=R->AF.W;R->AF.W=R->AF1.W;R->AF1.W=J.W;break;
+
 case LD_B_B:   R->BC.B.h=R->BC.B.h;break;
 case LD_C_B:   R->BC.B.l=R->BC.B.h;break;
 case LD_D_B:   R->DE.B.h=R->BC.B.h;break;

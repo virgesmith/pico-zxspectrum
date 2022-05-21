@@ -1,6 +1,10 @@
 #pragma once
 
-void spec_Init(void);
-void spec_Step(void);
-void spec_Start(char * filename);
-void spec_Input(int bClick);
+namespace spec {
+
+void init();
+void step();
+void start(char * filename);
+void input(int bClick);
+
+}

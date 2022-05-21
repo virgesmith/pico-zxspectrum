@@ -1,9 +1,16 @@
-#include "Z80.h"
+#include "spec.h"
+
 #include "spectrum_rom.h"
 #include "emuapi.h"
-#include "zx_filetyp_z80.h"
 
-#include <string.h>
+extern "C" {
+#include "Z80.h"
+#include "zx_filetyp_z80.h"
+}
+
+#include <cstdio>
+#include <cstring>
+
 
 // ZXSpectrum is 256x192
 static const int DISP_WIDTH = 256;
@@ -21,38 +28,10 @@ static const int VBORDER = (SCREEN_HEIGHT - DISP_HEIGHT) / 2;
 #define NBLINES (1) //(48+192+56+16) //(32+256+32)
 #define CYCLES_PER_STEP (CYCLES_PER_FRAME/NBLINES)
 
-typedef struct {
-  int port_ff;      // 0xff = emulate the port,  0x00 alwais 0xFF
-  int ts_lebo;      // left border t states
-  int ts_grap;      // graphic zone t states
-  int ts_ribo;      // right border t states
-  int ts_hore;      // horizontal retrace t states
-  int ts_line;      // to speed the calc, the sum of 4 abobe
-  int line_poin;    // lines in retraze post interrup
-  int line_upbo;    // lines of upper border
-  int line_grap;    // lines of graphic zone = 192
-  int line_bobo;    // lines of bottom border
-  int line_retr;    // lines of the retrace
-  /*
-  int TSTATES_PER_LINE;
-  int TOP_BORDER_LINES;
-  int SCANLINES;
-  int BOTTOM_BORDER_LINES;
-  int tstate_border_left;
-  int tstate_graphic_zone;
-  int tstate_border_right;
-  int hw_model;
-  int int_type;
-  int videopage;
-  int BANKM;
-  int BANK678;
-  */
-} HWOptions ;
+#define BASERAM 0x4000
 
-static HWOptions hwopt = { 0xFF, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
-//224, 64, 192, 56, 24, 128, 72};
 
-struct { unsigned char R,G,B; } Palette[16] = {
+struct { byte R,G,B; } Palette[16] = {
   {   0,   0,   0},
   {   0,   0, 205},
   { 205,   0,   0},
@@ -82,30 +61,63 @@ const byte map_qw[8][5] = {
     { 5,17,16,225,44}, // bnm <symbshift=RSHift> <space>
 };
 
-static byte Z80_RAM[0xC000];                    // 48k RAM
-static Z80 myCPU;
-static byte * volatile VRAM=Z80_RAM;            // What will be displayed. Generally ZX VRAM, can be changed for alt screens.
+namespace {
+
+byte Z80_RAM[0xC000];                    // 48k RAM
+Z80 myCPU;
+byte* volatile VRAM = Z80_RAM;            // What will be displayed. Generally ZX VRAM, can be changed for alt screens.
 
 //extern const byte rom_zx48_rom[];        // 16k ROM
-static byte key_ram[8]={
+byte key_ram[8]={
   0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Keyboard buffer
 byte out_ram;                            // Output (fe port)
-static byte kempston_ram;                       // Kempston-Joystick Buffer
+byte kempston_ram;                       // Kempston-Joystick Buffer
 
-static int bordercolor = 0;
-static byte* scanline_buffer = NULL;
+int bordercolor = 0;
+byte* scanline_buffer = NULL;
 
-static int ik;
-static int ihk;
+int ik;
+int ihk;
 
-void spec_Input(int bClick) {
-  //ik  = emu_GetPad();
-  //ihk = emu_ReadI2CKeyboard();
-  ihk = emu_ReadUsbSerial();
+int lastBuzzCycle=0;
+
+struct HWOptions
+{
+  int port_ff;      // 0xff = emulate the port,  0x00 alwais 0xFF
+  int ts_lebo;      // left border t states
+  int ts_grap;      // graphic zone t states
+  int ts_ribo;      // right border t states
+  int ts_hore;      // horizontal retrace t states
+  int ts_line;      // to speed the calc, the sum of 4 abobe
+  int line_poin;    // lines in retraze post interrup
+  int line_upbo;    // lines of upper border
+  int line_grap;    // lines of graphic zone = 192
+  int line_bobo;    // lines of bottom border
+  int line_retr;    // lines of the retrace
+  /*
+  int TSTATES_PER_LINE;
+  int TOP_BORDER_LINES;
+  int SCANLINES;
+  int BOTTOM_BORDER_LINES;
+  int tstate_border_left;
+  int tstate_graphic_zone;
+  int tstate_border_right;
+  int hw_model;
+  int int_type;
+  int videopage;
+  int BANKM;
+  int BANK678;
+  */
+};
+
+
+HWOptions hwopt = { 0xFF, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 
 }
 
-void displayscanline(int y, int f_flash)
+namespace {
+
+void displayScanline(int y, int f_flash)
 {
   int col = 0, pixeles, tinta, papel, atributos;
 
@@ -155,53 +167,28 @@ void displayscanline(int y, int f_flash)
 }
 
 
-static void displayScreen(void) {
+void displayScreen(void) {
   int y;
   static int f_flash = 1, f_flash2 = 0;
-  f_flash2 = (f_flash2++) % 32;
+  f_flash2 = (f_flash2 + 1) % 32;
   if (f_flash2 < 16)
     f_flash = 1;
   else
     f_flash = 0;
 
   for (y = 0; y < SCREEN_HEIGHT; y++)
-    displayscanline (y, f_flash);
+    displayScanline (y, f_flash);
 
   emu_DrawVsync();
 }
 
 
-#ifdef CUSTOM_SND
-#define SAMSIZE 32768
-static unsigned char sam[SAMSIZE];
-static int rdsam=0;
-static int wrsam=SAMSIZE/2;
-#endif
-
-static int lastBuzzCycle=0;
-//static byte lastBuzzVal;
-
-#ifdef CUSTOM_SND
-void  SND_Process( short * stream, int len )
+void initKeyboard()
 {
-    len = len >> 1;
-    for (int i=0;i<len;i++)
-    {
-      short s = sam[rdsam]?32767:0;
-      rdsam += 180;
-      rdsam &= SAMSIZE-1;
-      *stream++ = (short)(s);
-      *stream++ = (short)(s);
-    }
-}
-#endif
-
-
-static void InitKeyboard(void){
   memset(key_ram, 0xff, sizeof(key_ram));
 }
 
-static void UpdateKeyboard (void)
+static void updateKeyboard()
 {
   //int k = ik; //emu_GetPad();
   int hk = ihk; //emu_ReadI2CKeyboard();
@@ -222,9 +209,7 @@ static void UpdateKeyboard (void)
   if (shift & (1<<6)) key_ram[7] &= ~(1<<1);  // symbol shift
 }
 
-
-#define MAX_Z80SIZE 49152
-
+}
 
 int endsWith(const char * s, const char * suffix)
 {
@@ -240,13 +225,10 @@ int endsWith(const char * s, const char * suffix)
 }
 
 
-void emu_KeyboardOnDown(int keymodifer, int key) {
-}
+namespace spec {
 
-void emu_KeyboardOnUp(int keymodifer, int key) {
-}
-
-void spec_Start(char * filename) {
+void start(char * filename)
+{
 
   if (!filename) {
     ZX_ReadFromFlash_Z80(&myCPU, ZX48_ROM, 16384);
@@ -256,20 +238,14 @@ void spec_Start(char * filename) {
   emu_sndInit();
 }
 
-
-
-//static AY8910 ay;
-
-void spec_Init(void) {
+void init()
+{
   int J;
   /* Set up the palette */
   for(J=0;J<16;J++)
     emu_SetPaletteEntry(Palette[J].R,Palette[J].G,Palette[J].B, J);
 
-  InitKeyboard();
-
-  //Reset8910(&ay,3500000,0);
-
+  initKeyboard();
 
   if (scanline_buffer == NULL) scanline_buffer = (byte *)emu_Malloc(SCREEN_WIDTH);
   VRAM = Z80_RAM;
@@ -278,12 +254,12 @@ void spec_Init(void) {
   ResetZ80(&myCPU, CYCLES_PER_FRAME);
 #if ALT_Z80CORE
   myCPU.RAM = Z80_RAM;
-  Z80FlagTables();
 #endif
 }
 
 
-void spec_Step(void) {
+void step()
+{
   int scanl;
   for (scanl = 0; scanl < NBLINES; scanl++) {
     lastBuzzCycle=0;
@@ -294,7 +270,6 @@ void spec_Step(void) {
     //busy_wait_us(1);
     //sleep_us(1);
   }
-
 
 #if ALT_Z80CORE
 #else
@@ -317,23 +292,27 @@ void spec_Step(void) {
           kempston_ram |= 0x1; //Left
 
 
-  UpdateKeyboard();
+  updateKeyboard();
 
   //Loop8910(&ay,20);
 }
 
+void input(int bClick) {
+  //ik  = emu_GetPad();
+  //ihk = emu_ReadI2CKeyboard();
+  ihk = emu_ReadUsbSerial();
+}
+
+}
 
 
-#define BASERAM 0x4000
-
-
-void WrZ80(register word Addr,register byte Value)
+void WrZ80(word Addr, byte Value)
 {
   if (Addr >= BASERAM)
     Z80_RAM[Addr-BASERAM]=Value;
 }
 
-byte RdZ80(register word addr)
+byte RdZ80(word addr)
 {
   if (addr<BASERAM)
     return ZX48_ROM[addr];
@@ -360,30 +339,40 @@ void buzz(int val, int currentTstates)
 #endif
 }
 
-void OutZ80(register word Port,register byte Value)
+void OutZ80(word port,byte value)
 {
-/*  if ((Port & 0xC002) == 0xC000) {
-    WrCtrl8910(&ay,(Value &0x0F));
-  }
-  else if ((Port & 0xC002) == 0x8000) {
-    WrData8910(&ay,Value);
-  }
-  else*/ if (!(Port & 0x01)) {
-    bordercolor = (Value & 0x07);
-    //byte mic = (Value & 0x08);
-    byte ear = (Value & 0x10);
-    buzz(((ear)?1:0), CYCLES_PER_STEP-myCPU.ICount);
+  // if ((Port & 0xC002) == 0xC000) {
+  //   WrCtrl8910(&ay,(value &0x0F));
+  // }
+  // else if ((Port & 0xC002) == 0x8000) {
+  //   WrData8910(&ay,value);
+  // }
+  // else
+  static int t = 0;
+  // t = myCPU.ICount - t;
+
+
+  //if (!(port & 0x01)) {
+  if ((port & 0xFF) == 0xFE)
+  {
+    bordercolor = (value & 0x07);
+    //byte mic = (value & 0x08) ? 1 : 0;
+    byte ear = (value & 0x10) ? 1 : 0;
+    t = (CYCLES_PER_STEP-myCPU.ICount) - t;
+    printf("%c%c%c", (value & 0x1f), (byte)(t>>8), (byte)(t & 0xff));
+    // printf("%c%c", (byte)(t >> 8), (byte)(t &0xff));
+    buzz(ear, CYCLES_PER_STEP-myCPU.ICount);
     // TODO check if anything appears over serial....
-    //printf("%c", Value);
+    // printf("%d %d %d\n", bordercolor, mic, ear);
   }
-  else if((Port&0xFF)==0xFE) {
-    out_ram=Value; // update it
+  else if((port & 0xFF)==0xFE) {
+    out_ram=value; // update it
     // TODO check if anything appears over serial....
-    //printf("%c", Value);
+    //printf("Port 0xFE %d\n", value);
   }
 }
 
-byte InZ80(register word port)
+byte InZ80(word port)
 {
     // if (port == 0xFFFD) {
     //   return (RdData8910(&ay));
@@ -421,7 +410,7 @@ byte InZ80(register word port)
 }
 
 
-void PatchZ80(register Z80 *R)
+void PatchZ80(Z80 *R)
 {
   // nothing to do
 }

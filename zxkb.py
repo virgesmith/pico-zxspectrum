@@ -30,11 +30,11 @@ keymap = {
   KeyCode(char='"'): 31 + CAPS_MASK,
   KeyCode(char='£'): 32 + CAPS_MASK,
   KeyCode(char='$'): 33 + CAPS_MASK,
-  KeyCode(char='%'): 34 + CAPS_MASK,
-  KeyCode(char='^'): 35 + CAPS_MASK,
-  KeyCode(char='&'): 36 + CAPS_MASK,
-  KeyCode(char='*'): 37 + CAPS_MASK,
-  KeyCode(char='('): 38 + CAPS_MASK,
+  KeyCode(char='%'): 34 + CAPS_MASK, Key.left: 34 + CAPS_MASK,
+  KeyCode(char='^'): 35 + CAPS_MASK, Key.down: 35 + CAPS_MASK,
+  KeyCode(char='&'): 36 + CAPS_MASK, Key.up: 36 + CAPS_MASK,
+  KeyCode(char='*'): 37 + CAPS_MASK, Key.right: 37 + CAPS_MASK,
+  KeyCode(char='('): 38 + CAPS_MASK, Key.alt_gr: 38 + CAPS_MASK,
   KeyCode(char=')'): 39 + CAPS_MASK, Key.backspace: 39 + CAPS_MASK,
 
   KeyCode(char='q'): 20,
@@ -118,13 +118,12 @@ keymap = {
   KeyCode(char="_"): 39 + SYM_MASK,
   KeyCode(char="+"): 14 + SYM_MASK,
 
-
   # extended mode test
-  Key.tab: CAPS_MASK + SYM_MASK,
+  #Key.tab: CAPS_MASK + SYM_MASK,
 }
 
 def on_press(key: Key):
-  print(key)
+  # print(key)
   global caps, sym
   if key == Key.esc:
     exit(0)
@@ -157,17 +156,11 @@ if not Path(DEVICE).exists:
 device = Serial(DEVICE, BAUD_RATE)
 
 with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
-  print(device.read())
-  listener.join()
+  while True:
+    #c0, t0, c1, t1 = [b for b in device.read(4)]
+    #print(f"{c0}, {t0}, {c1}, {t1}")
+    b = device.read(3)
+    #print(f"{int.from_bytes(b[0], 'big')}, {int.from_bytes(b[1], 'big')}, {int.from_bytes(b[2]), 'big'}")
+    print(f"{b[0]}, {b[1]}, {b[2]}")
 
-
-
-# test = ")10p#20g10#"
-
-# for c in test:
-#   print(c)
-#   device.write(c.encode('utf-8')) # + b"\n")
-#   sleep(0.01)
-
-# #device.write(b"b\n")
-
+listener.join()

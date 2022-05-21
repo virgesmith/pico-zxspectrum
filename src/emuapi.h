@@ -1,16 +1,15 @@
 #ifndef EMUAPI_H
 #define EMUAPI_H
 
-#define EXTRA_HEAP  0x10
+//#ifndef __cplusplus__
+#include <stdbool.h>
+//#endif
 
+#define EXTRA_HEAP  0x10
 
 // Title:     <                        >
 #define TITLE "    SPECTRUM Emulator"
 #define ROMSDIR "spec"
-
-#define emu_Init(ROM) {spec_Init(); spec_Start(ROM);}
-#define emu_Step(x) {spec_Step();}
-#define emu_Input(x) {spec_Input(x);}
 
 #define PALETTE_SIZE         16
 #define VID_FRAME_SKIP       0x0
@@ -22,57 +21,6 @@
 #define ACTION_EXITKBD       128
 #define ACTION_RUNTFT        129
 #define ACTION_RUNVGA        130
-
-
-#ifdef KEYMAP_PRESENT
-/*
-    {25, 6,27,29,224},// vcxz<caps shift=Lshift>
-    {10, 9, 7,22, 4}, // gfdsa
-    {23,21, 8,26,20}, // trewq
-    {34,33,32,31,30}, // 54321
-    {35,36,37,38,39}, // 67890
-    {28,24,12,18,19}, // yuiop
-    {11,13,14,15,40}, // hjkl<enter>
-    { 5,17,16,225,44},// bnm <symbshift=RSHift> <space>
-*/
-
-#define keylables_map1_0 (char *)"qwertyuiop\x1a"
-#define keylables_map1_1 (char *)" asdfghjkl\x19"
-#define keylables_map1_2 (char *)" zxcvbnm.\x10 "
-const unsigned short key_map1[] = {
-  20,26,8,21,23,28,24,12,18,19,39+128,
-  0, 4, 22, 7,9, 10,11,13,14,15,40,
-  0,29,27,6,25,5,17,16,16+64,44,
-  0,0,0,0   //up,left,right,down
-  };
-
-#define keylables_map2_0 (char *)"1234567890="
-#define keylables_map2_1 (char *)" !@#$%+&*- "
-#define keylables_map2_2 (char *)" ()?/\"<>,: "
-const unsigned short key_map2[] = {
-  30,31,32,33,34,35,36,37,38,39,15+64,
-  0,30+64,31+64,32+64,33+64,34+64,14+64,35+64,5+64,13+64,0,
-  0, 37+64,38+64,6+64,25+64,19+64,21+64,23+64,17+64,29+64,
-  36+128,34+128,37+128,35+128   //up,left,right,down
-  };
-
-#define keylables_map3_0 (char *)"QWERTYUIOP "
-#define keylables_map3_1 (char *)" ASDFGHJKL "
-#define keylables_map3_2 (char *)" ZXCVBNM;  "
-const unsigned short key_map3[] = {
-  20+128,26+128,8+128,21+128,23+128,28+128,24+128,12+128,18+128,19+128,0, // Upper case
-  0, 4+128, 22+128, 7+128,9+128, 10+128,11+128,13+128,14+128,15+128,0,
-  0,29+128,27+128,6+128,25+128,5+128,17+128,16+128,18+64,44+128,
-  36+128,34+128,37+128,35+128   //up,left,right,down
-  };
-
-const unsigned short matkeys[] = {
-  0x020,0x120,0x220,0x320,0x420,0x408,0x308,0x208,0x108,0x008,0x002, // row 1
-  0x510,0x010,0x110,0x210,0x310,0x410,0x401,0x301,0x201,0x101,0x001, // row 2
-  0x520,0x102,0x202,0x302,0x402,0x404,0x304,0x204,0x104,0x004, // row 3
-  0x508,0x501,0x502,0x504 }; // cursor keys
-
-#endif
 
 
 #define MASK_JOY2_RIGHT 0x0001
@@ -91,6 +39,8 @@ const unsigned short matkeys[] = {
 #define MASK_KEY_USER4  0x2000
 #define MASK_OSKB       0x8000
 
+
+extern volatile bool vbl;
 
 extern void emu_init(void);
 extern void emu_start(void);
@@ -112,10 +62,10 @@ extern unsigned int emu_FileSize(const char * filepath);
 extern unsigned int emu_LoadFile(const char * filepath, void * buf, int size);
 
 extern void emu_SetPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int index);
-extern void emu_DrawScreen(unsigned char * VBuf, int width, int height, int stride);
+//extern void emu_DrawScreen(unsigned char * VBuf, int width, int height, int stride);
 extern void emu_DrawLine(unsigned char * VBuf, int width, int height, int line);
-extern void emu_DrawLine8(unsigned char * VBuf, int width, int height, int line);
-extern void emu_DrawLine16(unsigned short * VBuf, int width, int height, int line);
+// extern void emu_DrawLine8(unsigned char * VBuf, int width, int height, int line);
+// extern void emu_DrawLine16(unsigned short * VBuf, int width, int height, int line);
 extern void emu_DrawVsync(void);
 extern int emu_FrameSkip(void);
 extern void * emu_LineBuffer(int line);
@@ -135,8 +85,8 @@ extern int emu_GetPad(void);
 extern int emu_ReadAnalogJoyX(int min, int max);
 extern int emu_ReadAnalogJoyY(int min, int max);
 extern int emu_ReadI2CKeyboard(void);
-extern void emu_KeyboardOnUp(int keymodifer, int key);
-extern void emu_KeyboardOnDown(int keymodifer, int key);
+// extern void emu_KeyboardOnUp(int keymodifer, int key);
+// extern void emu_KeyboardOnDown(int keymodifer, int key);
 
 extern unsigned char emu_ReadUsbSerial(void);
 
