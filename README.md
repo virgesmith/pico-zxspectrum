@@ -41,10 +41,10 @@ cp build/picozxspectrum.uf2 /media/$USER/RPI-RP2/
 
 ## Use
 
-Rudimentary keyboard driver written in python and depends on pyserial and pynput. Very much a work in progress...
+Rudimentary keyboard driver written in python and depends on pyserial and pynput. Very much a work in progress... you can specify a .z80 format image to load on start. YMMV
 
 ```sh
-python zxkb.py
+python zxkb.py [image]
 ```
 
 This is useful:

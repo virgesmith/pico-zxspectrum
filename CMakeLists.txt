@@ -20,9 +20,9 @@ include_directories(src/FatFs_SPI)
 
 set(PICOSPECCY_SOURCES
 		src/Z80.c
-		src/spec.c
+		src/spec.cpp
 		src/zx_filetyp_z80.c
-		src/spectrum_rom.c
+		src/spectrum_rom.cpp
 		src/emuapi.cpp
 		src/picospeccy.cpp
 		src/AudioPlaySystem.cpp
@@ -38,12 +38,13 @@ add_executable(picozxspectrum
 	${TFT_T_SOURCES}
 )
 
-target_link_libraries(picozxspectrum pico_multicore
-	    pico_stdlib
-	    FatFs_SPI
+target_link_libraries(picozxspectrum
+	pico_multicore
+	pico_stdlib
+	FatFs_SPI
 #	    hardware_adc
-	    hardware_pio
-      hardware_pwm
+	hardware_pio
+	hardware_pwm
 )
 
 

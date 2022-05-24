@@ -1,3 +1,5 @@
 #pragma once
 
-extern const unsigned char ZX48_ROM[];
+#include "Z80.h"
+
+extern const byte ZX48_ROM[];

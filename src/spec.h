@@ -4,7 +4,7 @@ namespace spec {
 
 void init();
 void step();
-void start(char * filename);
+void start();
 void input(int bClick);
 
 }

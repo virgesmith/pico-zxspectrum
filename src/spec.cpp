@@ -8,7 +8,10 @@ extern "C" {
 #include "zx_filetyp_z80.h"
 }
 
+#include <pico/stdlib.h>
+
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 
@@ -124,7 +127,7 @@ void displayScanline(int y, int f_flash)
   if (y < VBORDER || y >= SCREEN_HEIGHT - VBORDER)
   {
     memset(scanline_buffer, bordercolor, SCREEN_WIDTH);
-    emu_DrawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
+    emu::drawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
     return;
   }
 
@@ -163,11 +166,11 @@ void displayScanline(int y, int f_flash)
 
   memset(scanline_buffer + col, bordercolor, HBORDER);
 
-  emu_DrawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
+  emu::drawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
 }
 
 
-void displayScreen(void) {
+void displayScreen() {
   int y;
   static int f_flash = 1, f_flash2 = 0;
   f_flash2 = (f_flash2 + 1) % 32;
@@ -179,7 +182,7 @@ void displayScreen(void) {
   for (y = 0; y < SCREEN_HEIGHT; y++)
     displayScanline (y, f_flash);
 
-  emu_DrawVsync();
+  emu::drawVsync();
 }
 
 
@@ -211,31 +214,30 @@ static void updateKeyboard()
 
 }
 
-int endsWith(const char * s, const char * suffix)
-{
-  int retval = 0;
-  int len = strlen(s);
-  int slen = strlen(suffix);
-  if (len > slen ) {
-    if (!strcmp(&s[len-slen], suffix)) {
-      retval = 1;
-    }
-  }
-   return (retval);
-}
-
 
 namespace spec {
 
-void start(char * filename)
+void start()
 {
-
-  if (!filename) {
-    ZX_ReadFromFlash_Z80(&myCPU, ZX48_ROM, 16384);
-  }
+  ZX_ReadFromFlash_Z80(&myCPU, ZX48_ROM, 16384);
 
   memset(Z80_RAM, 0, 0xC000);
-  emu_sndInit();
+  uint16_t len = (uint16_t)getchar() + (((uint16_t)getchar()) << 8);
+  if (len)
+  {
+    byte* buffer = (byte*)malloc(len);
+    if (buffer)
+    {
+      for (uint16_t i = 0; i < len; ++i)
+      {
+          buffer[i] = getchar();
+      }
+      ZX_ReadFromFlash_Z80(&myCPU, buffer, len);
+      free(buffer);
+    }
+  }
+
+  emu::sndInit();
 }
 
 void init()
@@ -243,11 +245,12 @@ void init()
   int J;
   /* Set up the palette */
   for(J=0;J<16;J++)
-    emu_SetPaletteEntry(Palette[J].R,Palette[J].G,Palette[J].B, J);
+    emu::setPaletteEntry(Palette[J].R,Palette[J].G,Palette[J].B, J);
 
   initKeyboard();
 
-  if (scanline_buffer == NULL) scanline_buffer = (byte *)emu_Malloc(SCREEN_WIDTH);
+  if (!scanline_buffer)
+    scanline_buffer = (byte *)malloc(SCREEN_WIDTH);
   VRAM = Z80_RAM;
   memset(Z80_RAM, 0, sizeof(Z80_RAM));
 
@@ -297,10 +300,9 @@ void step()
   //Loop8910(&ay,20);
 }
 
-void input(int bClick) {
-  //ik  = emu_GetPad();
-  //ihk = emu_ReadI2CKeyboard();
-  ihk = emu_ReadUsbSerial();
+void input(int bClick)
+{
+  ihk = emu::readUsbSerial();
 }
 
 }
@@ -335,7 +337,7 @@ void buzz(int val, int currentTstates)
   lastBuzzCycle = currentTstates;
   lastBuzzVal = val;
 #else
-  emu_sndPlayBuzz(pulse_size,val);
+  emu::sndPlayBuzz(pulse_size,val);
 #endif
 }
 
@@ -348,7 +350,7 @@ void OutZ80(word port,byte value)
   //   WrData8910(&ay,value);
   // }
   // else
-  static int t = 0;
+  // static int t = 0;
   // t = myCPU.ICount - t;
 
 
@@ -358,8 +360,8 @@ void OutZ80(word port,byte value)
     bordercolor = (value & 0x07);
     //byte mic = (value & 0x08) ? 1 : 0;
     byte ear = (value & 0x10) ? 1 : 0;
-    t = (CYCLES_PER_STEP-myCPU.ICount) - t;
-    printf("%c%c%c", (value & 0x1f), (byte)(t>>8), (byte)(t & 0xff));
+    // t = (CYCLES_PER_STEP-myCPU.ICount) - t;
+    // printf("%c%c%c", (value & 0x1f), (byte)(t>>8), (byte)(t & 0xff));
     // printf("%c%c", (byte)(t >> 8), (byte)(t &0xff));
     buzz(ear, CYCLES_PER_STEP-myCPU.ICount);
     // TODO check if anything appears over serial....

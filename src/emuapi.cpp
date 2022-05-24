@@ -1,22 +1,21 @@
 #include "emuapi.h"
 
-#include "pico.h"
-#include "pico/stdlib.h"
-//#include "hardware/adc.h"
-#include <stdio.h>
-#include <string.h>
-
 extern "C" {
-  #include "iopins.h"
+#include "iopins.h"
 }
-
-static bool emu_writeConfig(void);
-static bool emu_readConfig(void);
-static bool emu_eraseConfig(void);
 
 
 // Non Dual display config
 #include "tft_t_dma.h"
+
+#include "pico.h"
+#include "pico/stdlib.h"
+//#include "hardware/adc.h"
+
+#include <cstdio>
+#include <cstring>
+
+
 extern TFT_T_DMA tft;
 
 #define MAX_FILENAME_PATH   64
@@ -42,100 +41,33 @@ extern TFT_T_DMA tft;
 #define MENU_VGA_XOFFSET    (MENU_FILE_XOFFSET+MENU_FILE_W+8)
 #define MENU_VGA_YOFFSET    (MENU_VBAR_YOFFSET+MENU_FILE_H-32-37)
 
+namespace {
+unsigned char keymatrix[6];
+int keymatrix_hitrow=-1;
+bool key_fn=false;
+bool key_alt=false;
+uint32_t keypress_t_ms=0;
+uint32_t last_t_ms=0;
+uint32_t hundred_ms_cnt=0;
+bool ledflash_toggle=false;
 
-static unsigned char keymatrix[6];
-static int keymatrix_hitrow=-1;
-static bool key_fn=false;
-static bool key_alt=false;
-static uint32_t keypress_t_ms=0;
-static uint32_t last_t_ms=0;
-static uint32_t hundred_ms_cnt=0;
-static bool ledflash_toggle=false;
-static int keyMap;
-
-static uint16_t bLastState;
-static uint8_t usbnavpad=0;
-
-
-/********************************
- * Generic output and malloc
-********************************/
-void emu_printf(const char * text)
-{
-  printf("%s\n",text);
-}
-
-void emu_printf(int val)
-{
-  printf("%d\n",val);
-}
-
-void emu_printi(int val)
-{
-  printf("%d\n",val);
-}
-
-void emu_printh(int val)
-{
-  printf("0x%.8x\n",val);
-}
+uint16_t bLastState;
 
 // TODO int -> size_t
 
-static int malbufpt = 0;
-static char malbuf[EXTRA_HEAP];
+// char malbuf[EXTRA_HEAP];
+// int malbufpt = malbuf;
 
-void * emu_Malloc(int size)
-{
-  void * retval =  malloc(size);
-  if (!retval) {
-    emu_printf("failled to allocate");
-    emu_printf(size);
-    emu_printf("fallback");
-    if ( (malbufpt+size) < sizeof(malbuf) ) {
-      retval = (void *)&malbuf[malbufpt];
-      malbufpt += size;
-    }
-    else {
-      emu_printf("failure to allocate");
-    }
-  }
-  else {
-    emu_printf("could allocate dynamic ");
-    emu_printf(size);
-  }
-
-  return retval;
 }
-
-void * emu_MallocI(int size)
-{
-  void * retval =  NULL;
-
-  if ( (malbufpt+size) < sizeof(malbuf) ) {
-    retval = (void *)&malbuf[malbufpt];
-    malbufpt += size;
-    emu_printf("could allocate static ");
-    emu_printf(size);
-  }
-  else {
-    emu_printf("failure to allocate");
-  }
-
-  return retval;
-}
-void emu_Free(void * pt)
-{
-  free(pt);
-}
-
-void emu_drawText(unsigned short x, unsigned short y, const char * text, unsigned short fgcolor, unsigned short bgcolor, int doublesize)
+namespace emu {
+void drawText(unsigned short x, unsigned short y, const char * text, unsigned short fgcolor, unsigned short bgcolor, int doublesize)
 {
   tft.drawText(x, y, text, fgcolor, bgcolor, doublesize?true:false);
 }
 
+}
 
-int emu_ReadKeys(void)
+int emu::readKeys()
 {
   uint16_t retval = 0;
 
@@ -345,9 +277,9 @@ int emu_ReadKeys(void)
   return (retval);
 }
 
-unsigned short emu_DebounceLocalKeys(void)
+unsigned short emu::debounceLocalKeys()
 {
-  uint16_t bCurState = emu_ReadKeys();
+  uint16_t bCurState = readKeys();
   uint16_t bClick = bCurState & ~bLastState;
   bLastState = bCurState;
 
@@ -355,7 +287,7 @@ unsigned short emu_DebounceLocalKeys(void)
 }
 
 
-unsigned char emu_ReadUsbSerial(void) {
+unsigned char emu::readUsbSerial() {
   // mapping handled on client side now
   unsigned char c = getchar_timeout_us(0);
   if (c == 255)
@@ -435,23 +367,8 @@ volatile bool vbl = true;
 static unsigned char palette8[PALETTE_SIZE];
 static unsigned short palette16[PALETTE_SIZE];
 
-/********************************
- * Initialization
-********************************/
-void emu_init(void)
-{
-}
 
-
-void emu_start(void)
-{
-  usbnavpad = 0;
-
-  keyMap = 0;
-}
-
-
-void emu_SetPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int index)
+void emu::setPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int index)
 {
     if (index < PALETTE_SIZE)
     {
@@ -460,7 +377,7 @@ void emu_SetPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int 
     }
 }
 
-void emu_DrawVsync(void)
+void emu::drawVsync()
 {
     skip += 1;
     skip &= VID_FRAME_SKIP;
@@ -470,7 +387,7 @@ void emu_DrawVsync(void)
     };
 }
 
-void emu_DrawLine(unsigned char *VBuf, int width, int height, int line)
+void emu::drawLine(unsigned char *VBuf, int width, int height, int line)
 {
     if (skip == 0)
     {
@@ -478,12 +395,12 @@ void emu_DrawLine(unsigned char *VBuf, int width, int height, int line)
     }
 }
 
-int emu_FrameSkip(void)
+int emu::frameSkip()
 {
     return skip;
 }
 
-void* emu_LineBuffer(int line)
+void* emu::lineBuffer(int line)
 {
     return (void *)tft.getLineBuffer(line);
 }
@@ -491,15 +408,17 @@ void* emu_LineBuffer(int line)
 #include "AudioPlaySystem.h"
 AudioPlaySystem mymixer;
 #include "hardware/pwm.h"
-void emu_sndInit()
+
+void emu::sndInit()
 {
+    // uses core1
     tft.begin_audio(256, mymixer.snd_Mixer);
     mymixer.start();
     // gpio_init(AUDIO_PIN);
     // gpio_set_dir(AUDIO_PIN, GPIO_OUT);
 }
 
-void emu_sndPlaySound(int chan, int volume, int freq)
+void emu::sndPlaySound(int chan, int volume, int freq)
 {
     if (chan < 6)
     {
@@ -507,7 +426,7 @@ void emu_sndPlaySound(int chan, int volume, int freq)
     }
 }
 
-void emu_sndPlayBuzz(int size, int val)
+void emu::sndPlayBuzz(int size, int val)
 {
 #ifndef CUSTOM_SND
     // gpio_put(AUDIO_PIN, (val?1:0));

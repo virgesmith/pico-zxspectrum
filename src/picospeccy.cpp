@@ -1,40 +1,37 @@
-#include "pico.h"
-#include "pico/stdlib.h"
+#include "emuapi.h"
+#include "spec.h"
 
 extern "C"
 {
 #include "iopins.h"
 }
 
-#include "emuapi.h"
-#include "spec.h"
 
 #include "tft_t_dma.h"
 
-#include <cstdio>
-
-
-bool repeating_timer_callback(struct repeating_timer *t)
-{
-    uint16_t bClick = emu_DebounceLocalKeys();
-    spec::input(bClick);
-    if (vbl)
-    {
-        vbl = false;
-    }
-    else
-    {
-        vbl = true;
-    }
-    return true;
-}
-TFT_T_DMA tft;
-
+#include "pico.h"
+#include "pico/stdlib.h"
+#include "pico/multicore.h"
 
 #include "hardware/clocks.h"
 #include "hardware/vreg.h"
 
-int main(void)
+
+#include <cstdio>
+
+TFT_T_DMA tft;
+
+
+bool repeating_timer_callback(struct repeating_timer *t)
+{
+    uint16_t bClick = emu::debounceLocalKeys();
+    spec::input(bClick);
+    vbl = !vbl;
+    return true;
+}
+
+
+int main()
 {
     //    vreg_set_voltage(VREG_VOLTAGE_1_05);
     //    set_sys_clock_khz(125000, true);
@@ -48,11 +45,9 @@ int main(void)
     stdio_init_all();
 
     tft.begin();
-    emu_init();
-    emu_start();
 
     spec::init();
-    spec::start(nullptr);
+    spec::start();
     tft.fillScreenNoDma(RGBVAL16(0x00, 0x00, 0x00));
     tft.startDMA();
     repeating_timer timer;

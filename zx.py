@@ -1,8 +1,8 @@
-from tkinter.tix import Tree
 from pynput.keyboard import Key, KeyCode, Listener
 from serial import Serial
 from pathlib import Path
-from time import sleep
+#from time import sleep
+import sys
 
 DEVICE = "/dev/ttyACM0"
 BAUD_RATE = 115200
@@ -11,9 +11,6 @@ SYM_MASK = 64
 
 CAPS_SHIFT = 224
 SYM_SHIFT = 225
-
-caps = False
-sym = False
 
 keymap = {
   KeyCode(char='1'): 30,
@@ -122,45 +119,70 @@ keymap = {
   #Key.tab: CAPS_MASK + SYM_MASK,
 }
 
-def on_press(key: Key):
-  # print(key)
-  global caps, sym
-  if key == Key.esc:
-    exit(0)
-  if key == Key.shift:
-    caps = True
-  elif key == Key.ctrl_r:
-    sym = True
-    if caps and sym:
-      device.write((CAPS_MASK + SYM_MASK).to_bytes(1, byteorder='little'))
+def main(filename):
+
+  if not Path(DEVICE).exists:
+    raise FileNotFoundError("usb device not found")
+  zxspectrum = Serial(DEVICE, BAUD_RATE)
+
+
+  caps = False
+  sym = False
+
+
+  def on_press(key: Key):
+    # print(key)
+    nonlocal caps, sym
+    if key == Key.esc:
+      exit(0)
+    if key == Key.shift:
+      caps = True
+    elif key == Key.ctrl_r:
+      sym = True
+      if caps and sym:
+        zxspectrum.write((CAPS_MASK + SYM_MASK).to_bytes(1, byteorder='little'))
+    else:
+      code = keymap.get(key, 0)
+      if sym:
+        code += SYM_MASK
+      # print(f'{"shift-" if caps else ""}{"sym-" if sym else ""}{key} -> {code}')
+      zxspectrum.write(code.to_bytes(1, byteorder='little'))
+
+
+  def on_release(key: Key):
+    nonlocal caps, sym
+    if key == Key.shift:
+      caps = False
+      #device.write(CAPS_SHIFT.to_bytes(1, byteorder='little'))
+    elif key == Key.ctrl_r:
+      sym = False
+      #device.write(SYM_SHIFT.to_bytes(1, byteorder='little'))
+
+  if filename:
+    with open(filename, "rb") as fh:
+      data = fh.read()
+      n = len(data)
+      zxspectrum.write(n.to_bytes(2, 'little'))
+      zxspectrum.write(data)
   else:
-    code = keymap.get(key, 0)
-    if sym:
-      code += SYM_MASK
-    # print(f'{"shift-" if caps else ""}{"sym-" if sym else ""}{key} -> {code}')
-    device.write(code.to_bytes(1, byteorder='little'))
+    zxspectrum.write((0).to_bytes(2, 'little'))
 
+  with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
+    while True:
+      pass
+      #c0, t0, c1, t1 = [b for b in device.read(4)]
+      #print(f"{c0}, {t0}, {c1}, {t1}")
+      #b = zxspectrum.read(3)
+      # print(f"{int.from_bytes(b[0], 'big')}, {int.from_bytes(b[1], 'big')}, {int.from_bytes(b[2]), 'big'}")
+      #print(f"{b[0]}, {b[1]}, {b[2]}")
 
-def on_release(key: Key):
-  global caps, sym
-  if key == Key.shift:
-    caps = False
-    #device.write(CAPS_SHIFT.to_bytes(1, byteorder='little'))
-  elif key == Key.ctrl_r:
-    sym = False
-    #device.write(SYM_SHIFT.to_bytes(1, byteorder='little'))
+  listener.join()
 
-if not Path(DEVICE).exists:
-  raise FileNotFoundError("usb device not found")
+if __name__ == "__main__":
+  print("esc, ctrl-C to exit")
+  if len(sys.argv) > 1:
+    filename = sys.argv[1]
+  else:
+    filename = None
+  main(filename)
 
-device = Serial(DEVICE, BAUD_RATE)
-
-with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
-  while True:
-    #c0, t0, c1, t1 = [b for b in device.read(4)]
-    #print(f"{c0}, {t0}, {c1}, {t1}")
-    b = device.read(3)
-    #print(f"{int.from_bytes(b[0], 'big')}, {int.from_bytes(b[1], 'big')}, {int.from_bytes(b[2]), 'big'}")
-    print(f"{b[0]}, {b[1]}, {b[2]}")
-
-listener.join()
