@@ -1,4 +1,4 @@
-#include "emuapi.h"
+#include "sound.h"
 
 extern "C"
 {
@@ -13,7 +13,7 @@ extern "C"
 
 AudioPlaySystem mymixer;
 
-void emu::sndInit()
+void emu::sound::init()
 {
   // uses core1
   // tft.begin_audio(256, mymixer.snd_Mixer);
@@ -22,7 +22,7 @@ void emu::sndInit()
   // gpio_set_dir(AUDIO_PIN, GPIO_OUT);
 }
 
-void emu::sndPlaySound(int chan, int volume, int freq)
+void emu::sound::playSound(int chan, int volume, int freq)
 {
   if (chan < 6)
   {
@@ -30,7 +30,7 @@ void emu::sndPlaySound(int chan, int volume, int freq)
   }
 }
 
-void emu::sndPlayBuzz(int size, int val)
+void emu::sound::playBuzz(int size, int val)
 {
 #ifndef CUSTOM_SND
   // gpio_put(AUDIO_PIN, (val?1:0));

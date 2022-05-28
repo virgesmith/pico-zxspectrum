@@ -12,7 +12,7 @@ extern "C" {
 namespace {
 
 int keymatrix_hitrow = -1;
-unsigned char keymatrix[6];
+byte keymatrix[6];
 uint16_t bLastState;
 uint32_t last_t_ms = 0;
 bool ledflash_toggle=false;
@@ -30,9 +30,9 @@ uint16_t emu::keyboard::readKeys()
   uint16_t retval = 0;
 
   keymatrix_hitrow = -1;
-  unsigned char row;
-  unsigned short cols[6]={KCOLOUT1,KCOLOUT2,KCOLOUT3,KCOLOUT4,KCOLOUT5,KCOLOUT6};
-  unsigned char keymatrixtmp[6];
+  byte row;
+  uint16_t cols[6] = {KCOLOUT1,KCOLOUT2,KCOLOUT3,KCOLOUT4,KCOLOUT5,KCOLOUT6};
+  byte keymatrixtmp[6];
 
   for (int i=0;i<6;i++){
     gpio_set_dir(cols[i], GPIO_OUT);
@@ -110,8 +110,8 @@ uint16_t emu::keyboard::readKeys()
 
 #ifdef SWAP_ALT_DEL
   // Swap ALT and DEL
-  unsigned char alt = keymatrixtmp[0] & 0x02;
-  unsigned char del = keymatrixtmp[5] & 0x20;
+  byte alt = keymatrixtmp[0] & 0x02;
+  byte del = keymatrixtmp[5] & 0x20;
   keymatrixtmp[0] &= ~0x02;
   keymatrixtmp[5] &= ~0x20;
   if (alt) keymatrixtmp[5] |= 0x20;
@@ -235,7 +235,7 @@ uint16_t emu::keyboard::readKeys()
   return retval;
 }
 
-unsigned short emu::keyboard::debounceLocalKeys()
+uint16_t emu::keyboard::debounceLocalKeys()
 {
   uint16_t bCurState = readKeys();
   uint16_t bClick = bCurState & ~bLastState;
@@ -245,9 +245,9 @@ unsigned short emu::keyboard::debounceLocalKeys()
 }
 
 
-unsigned char emu::keyboard::readUsbSerial() {
+byte emu::keyboard::readUsbSerial() {
   // mapping handled on client side now
-  unsigned char c = getchar_timeout_us(0);
+  byte c = getchar_timeout_us(0);
   if (c == 255)
     c = 0;
   return c;

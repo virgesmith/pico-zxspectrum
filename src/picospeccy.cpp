@@ -1,4 +1,3 @@
-#include "emuapi.h"
 #include "spec.h"
 #include "display.h"
 #include "keyboard.h"

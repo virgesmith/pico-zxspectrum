@@ -1,7 +1,5 @@
 #include "display.h"
 
-#include "emuapi.h"
-
 #include <cstring>
 
 

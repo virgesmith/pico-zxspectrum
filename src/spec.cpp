@@ -1,7 +1,7 @@
 #include "spec.h"
 
 #include "spectrum_rom.h"
-#include "emuapi.h"
+#include "sound.h"
 #include "display.h"
 #include "keyboard.h"
 
@@ -132,7 +132,7 @@ void start()
     }
   }
 
-  emu::sndInit();
+  emu::sound::init();
 }
 
 byte* init()
@@ -222,7 +222,7 @@ void buzz(int val, int currentTstates)
   lastBuzzCycle = currentTstates;
   lastBuzzVal = val;
 #else
-  emu::sndPlayBuzz(pulse_size,val);
+  emu::sound::playBuzz(pulse_size,val);
 #endif
 }
 
