@@ -3,6 +3,7 @@
 #include "spectrum_rom.h"
 #include "emuapi.h"
 #include "display.h"
+#include "keyboard.h"
 
 extern "C" {
 #include "Z80.h"
@@ -186,7 +187,7 @@ void step()
 
 void input(int bClick)
 {
-  ihk = emu::readUsbSerial();
+  ihk = emu::keyboard::readUsbSerial();
 }
 
 }

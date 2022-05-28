@@ -1,13 +1,7 @@
 #include "emuapi.h"
 #include "spec.h"
 #include "display.h"
-
-extern "C"
-{
-#include "iopins.h"
-}
-
-#include "tft_t_dma.h"
+#include "keyboard.h"
 
 #include "pico.h"
 #include "pico/stdlib.h"
@@ -38,13 +32,15 @@ emu::display::RGB PALETTE[16] = {
   { 255, 255, 255}
 };
 
+
 bool repeating_timer_callback(struct repeating_timer *t)
 {
-  uint16_t bClick = emu::debounceLocalKeys();
+  uint16_t bClick = emu::keyboard::debounceLocalKeys();
   spec::input(bClick);
   emu::display::toggle_vbl();
   return true;
 }
+
 
 int main()
 {
@@ -59,7 +55,7 @@ int main()
   //    set_sys_clock_khz(250000, true);
   stdio_init_all();
 
-  byte *ram_start = spec::init();
+  byte* ram_start = spec::init();
   spec::start();
   emu::display::init(ram_start, PALETTE);
 

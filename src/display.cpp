@@ -14,6 +14,9 @@ const int SCREEN_HEIGHT = 240;
 // ZXSpectrum is 256x192
 const int DISP_WIDTH = 256; // pass in to ctor...
 const int DISP_HEIGHT = 192; // pass in to ctor...
+const int PALETTE_SIZE = 16;
+
+const int VID_FRAME_SKIP = 0x0;
 
 const int HBORDER = (SCREEN_WIDTH - DISP_WIDTH) / 2;
 const int VBORDER = (SCREEN_HEIGHT - DISP_HEIGHT) / 2;
@@ -45,10 +48,9 @@ void drawVsync()
   while (vbl == vb) { };
 }
 
-
 void displayScanline(int y, int f_flash)
 {
-  int col = 0, pixeles, tinta, papel, atributos;
+  int col = 0, pixel, ink, paper, attr;
 
   if (y < VBORDER || y >= SCREEN_HEIGHT - VBORDER)
   {
@@ -65,29 +67,29 @@ void displayScanline(int y, int f_flash)
   int dir_p = ((row & 0xC0) << 5) + ((row & 0x07) << 8) + ((row & 0x38) << 2);
   int dir_a = 0x1800 + (32 * (row >> 3));
 
-  for (int x = 0; x < 32; x++)
+  for (int x = 0; x < 32; ++x)
   {
-    pixeles=  VRAM[dir_p++];
-    atributos=VRAM[dir_a++];
+    pixel = VRAM[dir_p++];
+    attr = VRAM[dir_a++];
 
-    if (((atributos & 0x80) == 0) || (f_flash == 0))
+    if (((attr & 0x80) == 0) || (f_flash == 0))
     {
-      tinta = (atributos & 0x07) + ((atributos & 0x40) >> 3);
-      papel = (atributos & 0x78) >> 3;
+      ink = (attr & 0x07) + ((attr & 0x40) >> 3);
+      paper = (attr & 0x78) >> 3;
     }
     else
     {
-      papel = (atributos & 0x07) + ((atributos & 0x40) >> 3);
-      tinta = (atributos & 0x78) >> 3;
+      paper = (attr & 0x07) + ((attr & 0x40) >> 3);
+      ink = (attr & 0x78) >> 3;
     }
-    scanline_buffer[col++] = ((pixeles & 0x80) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x40) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x20) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x10) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x08) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x04) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x02) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x01) ? tinta : papel);
+    scanline_buffer[col++] = ((pixel & 0x80) ? ink : paper);
+    scanline_buffer[col++] = ((pixel & 0x40) ? ink : paper);
+    scanline_buffer[col++] = ((pixel & 0x20) ? ink : paper);
+    scanline_buffer[col++] = ((pixel & 0x10) ? ink : paper);
+    scanline_buffer[col++] = ((pixel & 0x08) ? ink : paper);
+    scanline_buffer[col++] = ((pixel & 0x04) ? ink : paper);
+    scanline_buffer[col++] = ((pixel & 0x02) ? ink : paper);
+    scanline_buffer[col++] = ((pixel & 0x01) ? ink : paper);
   }
 
   memset(scanline_buffer + col, emu::display::bordercolor, HBORDER);
@@ -112,13 +114,6 @@ void emu::display::init(byte* const pram, const RGB (&palette)[16])
   tft.startDMA();
 }
 
-// void emu::display::setPaletteEntry(byte r, byte g, byte b, int index)
-// {
-//   if (index < PALETTE_SIZE)
-//   {
-
-//   }
-// }
 
 void emu::display::toggle_vbl()
 {

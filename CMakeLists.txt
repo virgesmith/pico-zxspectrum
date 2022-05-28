@@ -26,6 +26,7 @@ set(PICOSPECCY_SOURCES
 		src/spectrum_rom.cpp
 		src/emuapi.cpp
 		src/display.cpp
+		src/keyboard.cpp
 		src/picospeccy.cpp
 		src/AudioPlaySystem.cpp
 	)
