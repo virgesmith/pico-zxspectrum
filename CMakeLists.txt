@@ -12,10 +12,11 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 add_subdirectory(src/FatFs_SPI build)
+# add_subdirectory(pimoroni-pico EXCLUDE_FROM_ALL)
 
 include_directories(src/config)
 include_directories(src/tft_t)
-include_directories(src/FatFs_SPI)
+# include_directories(src/FatFs_SPI)
 
 
 set(PICOSPECCY_SOURCES
@@ -24,6 +25,7 @@ set(PICOSPECCY_SOURCES
 		src/zx_filetyp_z80.c
 		src/spectrum_rom.cpp
 		src/emuapi.cpp
+		src/display.cpp
 		src/picospeccy.cpp
 		src/AudioPlaySystem.cpp
 	)
@@ -38,6 +40,8 @@ add_executable(picozxspectrum
 	${TFT_T_SOURCES}
 )
 
+include_directories(${CMAKE_SOURCE_DIR}/../pimoroni-pico)
+
 target_link_libraries(picozxspectrum
 	pico_multicore
 	pico_stdlib
@@ -45,6 +49,8 @@ target_link_libraries(picozxspectrum
 #	    hardware_adc
 	hardware_pio
 	hardware_pwm
+#	pico_display_2
+#	generic_st7789
 )
 
 

@@ -1,11 +1,11 @@
 #include "emuapi.h"
 #include "spec.h"
+#include "display.h"
 
 extern "C"
 {
 #include "iopins.h"
 }
-
 
 #include "tft_t_dma.h"
 
@@ -16,46 +16,58 @@ extern "C"
 #include "hardware/clocks.h"
 #include "hardware/vreg.h"
 
-
 #include <cstdio>
 
-TFT_T_DMA tft;
 
+emu::display::RGB PALETTE[16] = {
+  {   0,   0,   0},
+  {   0,   0, 205},
+  { 205,   0,   0},
+  { 205,   0, 205},
+  {   0, 205,   0},
+  {   0, 205, 205},
+  { 205, 205,   0},
+  { 212, 212, 212},
+  {   0,   0,   0},
+  {   0,   0, 255},
+  { 255,   0,   0},
+  { 255,   0, 255},
+  {   0, 255,   0},
+  {   0, 255, 255},
+  { 255, 255,   0},
+  { 255, 255, 255}
+};
 
 bool repeating_timer_callback(struct repeating_timer *t)
 {
-    uint16_t bClick = emu::debounceLocalKeys();
-    spec::input(bClick);
-    vbl = !vbl;
-    return true;
+  uint16_t bClick = emu::debounceLocalKeys();
+  spec::input(bClick);
+  emu::display::toggle_vbl();
+  return true;
 }
-
 
 int main()
 {
-    //    vreg_set_voltage(VREG_VOLTAGE_1_05);
-    //    set_sys_clock_khz(125000, true);
-    //    set_sys_clock_khz(150000, true);
-    //    set_sys_clock_khz(133000, true);
-    //    set_sys_clock_khz(200000, true);
-    //    set_sys_clock_khz(210000, true);
-    set_sys_clock_khz(230000, true);
-    //    set_sys_clock_khz(225000, true);
-    //    set_sys_clock_khz(250000, true);
-    stdio_init_all();
+  //    vreg_set_voltage(VREG_VOLTAGE_1_05);
+  //    set_sys_clock_khz(125000, true);
+  //    set_sys_clock_khz(150000, true);
+  //    set_sys_clock_khz(133000, true);
+  //    set_sys_clock_khz(200000, true);
+  //    set_sys_clock_khz(210000, true);
+  set_sys_clock_khz(230000, true);
+  //    set_sys_clock_khz(225000, true);
+  //    set_sys_clock_khz(250000, true);
+  stdio_init_all();
 
-    tft.begin();
+  byte *ram_start = spec::init();
+  spec::start();
+  emu::display::init(ram_start, PALETTE);
 
-    spec::init();
-    spec::start();
-    tft.fillScreenNoDma(RGBVAL16(0x00, 0x00, 0x00));
-    tft.startDMA();
-    repeating_timer timer;
-    add_repeating_timer_ms(25, repeating_timer_callback, NULL, &timer);
+  repeating_timer timer;
+  add_repeating_timer_ms(25, repeating_timer_callback, NULL, &timer);
 
-    for (;;)
-    {
-        spec::step();
-    }
+  for (;;)
+  {
+    spec::step();
+  }
 }
-

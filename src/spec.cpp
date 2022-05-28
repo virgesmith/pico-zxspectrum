@@ -2,6 +2,7 @@
 
 #include "spectrum_rom.h"
 #include "emuapi.h"
+#include "display.h"
 
 extern "C" {
 #include "Z80.h"
@@ -14,18 +15,6 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 
-
-// ZXSpectrum is 256x192
-static const int DISP_WIDTH = 256;
-static const int DISP_HEIGHT = 192;
-// TFT is 320x240
-static const int SCREEN_WIDTH  = 320;
-static const int SCREEN_HEIGHT = 240;
-
-static const int HBORDER = (SCREEN_WIDTH - DISP_WIDTH) / 2; // ZXSpectrums is 256x192
-static const int VBORDER = (SCREEN_HEIGHT - DISP_HEIGHT) / 2;
-
-
 #define CYCLES_PER_FRAME 69888 //3500000/50
 
 #define NBLINES (1) //(48+192+56+16) //(32+256+32)
@@ -33,25 +22,6 @@ static const int VBORDER = (SCREEN_HEIGHT - DISP_HEIGHT) / 2;
 
 #define BASERAM 0x4000
 
-
-struct { byte R,G,B; } Palette[16] = {
-  {   0,   0,   0},
-  {   0,   0, 205},
-  { 205,   0,   0},
-  { 205,   0, 205},
-  {   0, 205,   0},
-  {   0, 205, 205},
-  { 205, 205,   0},
-  { 212, 212, 212},
-  {   0,   0,   0},
-  {   0,   0, 255},
-  { 255,   0,   0},
-  { 255,   0, 255},
-  {   0, 255,   0},
-  {   0, 255, 255},
-  { 255, 255,   0},
-  { 255, 255, 255}
-};
 
 const byte map_qw[8][5] = {
     {25, 6,27,29,224}, // vcxz<caps shift=Lshift>
@@ -66,18 +36,11 @@ const byte map_qw[8][5] = {
 
 namespace {
 
-byte Z80_RAM[0xC000];                    // 48k RAM
+byte ZX_RAM[0xC000];                    // 48k RAM
 Z80 myCPU;
-byte* volatile VRAM = Z80_RAM;            // What will be displayed. Generally ZX VRAM, can be changed for alt screens.
-
-//extern const byte rom_zx48_rom[];        // 16k ROM
-byte key_ram[8]={
-  0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Keyboard buffer
+byte key_ram[8]={0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Keyboard buffer
 byte out_ram;                            // Output (fe port)
 byte kempston_ram;                       // Kempston-Joystick Buffer
-
-int bordercolor = 0;
-byte* scanline_buffer = NULL;
 
 int ik;
 int ihk;
@@ -116,75 +79,6 @@ struct HWOptions
 
 HWOptions hwopt = { 0xFF, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 
-}
-
-namespace {
-
-void displayScanline(int y, int f_flash)
-{
-  int col = 0, pixeles, tinta, papel, atributos;
-
-  if (y < VBORDER || y >= SCREEN_HEIGHT - VBORDER)
-  {
-    memset(scanline_buffer, bordercolor, SCREEN_WIDTH);
-    emu::drawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
-    return;
-  }
-
-  memset(scanline_buffer, bordercolor, HBORDER);
-  col += HBORDER;
-
-  int row = y - VBORDER;
-
-  int dir_p = ((row & 0xC0) << 5) + ((row & 0x07) << 8) + ((row & 0x38) << 2);
-  int dir_a = 0x1800 + (32 * (row >> 3));
-
-  for (int x = 0; x < 32; x++)
-  {
-    pixeles=  VRAM[dir_p++];
-    atributos=VRAM[dir_a++];
-
-    if (((atributos & 0x80) == 0) || (f_flash == 0))
-    {
-      tinta = (atributos & 0x07) + ((atributos & 0x40) >> 3);
-      papel = (atributos & 0x78) >> 3;
-    }
-    else
-    {
-      papel = (atributos & 0x07) + ((atributos & 0x40) >> 3);
-      tinta = (atributos & 0x78) >> 3;
-    }
-    scanline_buffer[col++] = ((pixeles & 0x80) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x40) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x20) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x10) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x08) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x04) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x02) ? tinta : papel);
-    scanline_buffer[col++] = ((pixeles & 0x01) ? tinta : papel);
-  }
-
-  memset(scanline_buffer + col, bordercolor, HBORDER);
-
-  emu::drawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
-}
-
-
-void displayScreen() {
-  int y;
-  static int f_flash = 1, f_flash2 = 0;
-  f_flash2 = (f_flash2 + 1) % 32;
-  if (f_flash2 < 16)
-    f_flash = 1;
-  else
-    f_flash = 0;
-
-  for (y = 0; y < SCREEN_HEIGHT; y++)
-    displayScanline (y, f_flash);
-
-  emu::drawVsync();
-}
-
 
 void initKeyboard()
 {
@@ -221,7 +115,7 @@ void start()
 {
   ZX_ReadFromFlash_Z80(&myCPU, ZX48_ROM, 16384);
 
-  memset(Z80_RAM, 0, 0xC000);
+  memset(ZX_RAM, 0, 0xC000);
   uint16_t len = (uint16_t)getchar() + (((uint16_t)getchar()) << 8);
   if (len)
   {
@@ -240,24 +134,14 @@ void start()
   emu::sndInit();
 }
 
-void init()
+byte* init()
 {
-  int J;
-  /* Set up the palette */
-  for(J=0;J<16;J++)
-    emu::setPaletteEntry(Palette[J].R,Palette[J].G,Palette[J].B, J);
-
   initKeyboard();
 
-  if (!scanline_buffer)
-    scanline_buffer = (byte *)malloc(SCREEN_WIDTH);
-  VRAM = Z80_RAM;
-  memset(Z80_RAM, 0, sizeof(Z80_RAM));
+  memset(ZX_RAM, 0, sizeof(ZX_RAM));
 
   ResetZ80(&myCPU, CYCLES_PER_FRAME);
-#if ALT_Z80CORE
-  myCPU.RAM = Z80_RAM;
-#endif
+  return ZX_RAM;
 }
 
 
@@ -278,7 +162,7 @@ void step()
 #else
   IntZ80(&myCPU,INT_IRQ); // must be called every 20ms
 #endif
-  displayScreen();
+  emu::display::render();
 
   int k=ik; //emu_GetPad();
 
@@ -311,7 +195,7 @@ void input(int bClick)
 void WrZ80(word Addr, byte Value)
 {
   if (Addr >= BASERAM)
-    Z80_RAM[Addr-BASERAM]=Value;
+    ZX_RAM[Addr-BASERAM]=Value;
 }
 
 byte RdZ80(word addr)
@@ -319,7 +203,7 @@ byte RdZ80(word addr)
   if (addr<BASERAM)
     return ZX48_ROM[addr];
   else
-    return Z80_RAM[addr-BASERAM];
+    return ZX_RAM[addr-BASERAM];
 }
 
 
@@ -357,7 +241,7 @@ void OutZ80(word port,byte value)
   //if (!(port & 0x01)) {
   if ((port & 0xFF) == 0xFE)
   {
-    bordercolor = (value & 0x07);
+    emu::display::bordercolor = (value & 0x07);
     //byte mic = (value & 0x08) ? 1 : 0;
     byte ear = (value & 0x10) ? 1 : 0;
     // t = (CYCLES_PER_STEP-myCPU.ICount) - t;

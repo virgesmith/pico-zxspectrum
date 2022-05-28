@@ -5,9 +5,6 @@ extern "C" {
 }
 
 
-// Non Dual display config
-#include "tft_t_dma.h"
-
 #include "pico.h"
 #include "pico/stdlib.h"
 //#include "hardware/adc.h"
@@ -16,32 +13,13 @@ extern "C" {
 #include <cstring>
 
 
-extern TFT_T_DMA tft;
+// #define MAX_FILENAME_PATH   64
+// #define NB_FILE_HANDLER     4
+// #define AUTORUN_FILENAME    "autorun.txt"
 
-#define MAX_FILENAME_PATH   64
-#define NB_FILE_HANDLER     4
-#define AUTORUN_FILENAME    "autorun.txt"
-
-#define MAX_FILES           64
-#define MAX_FILENAME_SIZE   24
-#define MAX_MENULINES       9
-#define TEXT_HEIGHT         16
-#define TEXT_WIDTH          8
-#define MENU_FILE_XOFFSET   (6*TEXT_WIDTH)
-#define MENU_FILE_YOFFSET   (2*TEXT_HEIGHT)
-#define MENU_FILE_W         (MAX_FILENAME_SIZE*TEXT_WIDTH)
-#define MENU_FILE_H         (MAX_MENULINES*TEXT_HEIGHT)
-#define MENU_FILE_BGCOLOR   RGBVAL16(0x00,0x00,0x40)
-#define MENU_JOYS_YOFFSET   (12*TEXT_HEIGHT)
-#define MENU_VBAR_XOFFSET   (0*TEXT_WIDTH)
-#define MENU_VBAR_YOFFSET   (MENU_FILE_YOFFSET)
-
-#define MENU_TFT_XOFFSET    (MENU_FILE_XOFFSET+MENU_FILE_W+8)
-#define MENU_TFT_YOFFSET    (MENU_VBAR_YOFFSET+32)
-#define MENU_VGA_XOFFSET    (MENU_FILE_XOFFSET+MENU_FILE_W+8)
-#define MENU_VGA_YOFFSET    (MENU_VBAR_YOFFSET+MENU_FILE_H-32-37)
 
 namespace {
+
 unsigned char keymatrix[6];
 int keymatrix_hitrow=-1;
 bool key_fn=false;
@@ -59,13 +37,14 @@ uint16_t bLastState;
 // int malbufpt = malbuf;
 
 }
-namespace emu {
-void drawText(unsigned short x, unsigned short y, const char * text, unsigned short fgcolor, unsigned short bgcolor, int doublesize)
-{
-  tft.drawText(x, y, text, fgcolor, bgcolor, doublesize?true:false);
-}
 
-}
+// namespace emu {
+// void drawText(unsigned short x, unsigned short y, const char * text, unsigned short fgcolor, unsigned short bgcolor, int doublesize)
+// {
+//   tft.drawText(x, y, text, fgcolor, bgcolor, doublesize?true:false);
+// }
+
+// }
 
 int emu::readKeys()
 {
@@ -360,50 +339,6 @@ unsigned char emu::readUsbSerial() {
 // int emu_setKeymap(int index) {
 // }
 
-static int skip = 0;
-volatile bool vbl = true;
-
-
-static unsigned char palette8[PALETTE_SIZE];
-static unsigned short palette16[PALETTE_SIZE];
-
-
-void emu::setPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int index)
-{
-    if (index < PALETTE_SIZE)
-    {
-        palette8[index] = RGBVAL8(r, g, b);
-        palette16[index] = RGBVAL16(r, g, b);
-    }
-}
-
-void emu::drawVsync()
-{
-    skip += 1;
-    skip &= VID_FRAME_SKIP;
-    volatile bool vb = vbl;
-    while (vbl == vb)
-    {
-    };
-}
-
-void emu::drawLine(unsigned char *VBuf, int width, int height, int line)
-{
-    if (skip == 0)
-    {
-        tft.writeLine(width, height, line, VBuf, palette16);
-    }
-}
-
-int emu::frameSkip()
-{
-    return skip;
-}
-
-void* emu::lineBuffer(int line)
-{
-    return (void *)tft.getLineBuffer(line);
-}
 
 #include "AudioPlaySystem.h"
 AudioPlaySystem mymixer;
@@ -412,8 +347,8 @@ AudioPlaySystem mymixer;
 void emu::sndInit()
 {
     // uses core1
-    tft.begin_audio(256, mymixer.snd_Mixer);
-    mymixer.start();
+    // tft.begin_audio(256, mymixer.snd_Mixer);
+    // mymixer.start();
     // gpio_init(AUDIO_PIN);
     // gpio_set_dir(AUDIO_PIN, GPIO_OUT);
 }

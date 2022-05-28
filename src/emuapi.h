@@ -34,17 +34,6 @@
 #define MASK_KEY_USER4  0x2000
 #define MASK_OSKB       0x8000
 
-#define RGBVAL32(r,g,b)  ( (r<<16) | (g<<8) | b )
-#define RGBVAL16(r,g,b)  ( (((r>>3)&0x1f)<<11) | (((g>>2)&0x3f)<<5) | (((b>>3)&0x1f)<<0) )
-#define RGBVAL8(r,g,b)   ( (((r>>5)&0x07)<<5) | (((g>>5)&0x07)<<2) | (((b>>6)&0x3)<<0) )
-#define R16(rgb) ((rgb>>8)&0xf8)
-#define G16(rgb) ((rgb>>3)&0xfc)
-#define B16(rgb) ((rgb<<3)&0xf8)
-
-
-
-extern volatile bool vbl;
-
 namespace emu {
 
 int fileOpen(const char * filepath, const char * mode);
@@ -57,13 +46,6 @@ void fileClose(int handler);
 unsigned int fileSize(const char * filepath);
 unsigned int loadFile(const char * filepath, void * buf, int size);
 
-void setPaletteEntry(unsigned char r, unsigned char g, unsigned char b, int index);
-void drawLine(unsigned char * VBuf, int width, int height, int line);
-void drawVsync();
-int frameSkip();
-void* lineBuffer(int line);
-
-void drawText(unsigned short x, unsigned short y, const char * text, unsigned short fgcolor, unsigned short bgcolor, int doublesize);
 
 void initJoysticks();
 int swapJoysticks(int statusOnly);
