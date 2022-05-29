@@ -6,7 +6,8 @@
 // EMail    : mc-4u(@)t-online.de
 // Web      : www.mikrocontroller-4u.de
 //--------------------------------------------------------------
-#include "zx_filetyp_z80.h"
+#include "loader.h"
+#include "display.h"
 
 //-------------------------------------------------------------
 extern uint8_t out_ram;
@@ -14,10 +15,91 @@ extern uint8_t out_ram;
 //--------------------------------------------------------------
 // interne Funktionen
 //--------------------------------------------------------------
-const uint8_t* p_decompFlashBlock(const uint8_t *block_adr);
+namespace {
+
+//--------------------------------------------------------------
+// Internal function
+// Unpack and store a block of data
+// ( From flash ) the new version
+//--------------------------------------------------------------
+const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
+{
+  const uint8_t *ptr;
+  const uint8_t *next_block;
+  uint8_t value1,value2;
+  uint16_t block_len;
+  uint8_t flag_compressed=0;
+  uint8_t flag_page=0;
+  uint16_t cur_addr=0;
+
+  // pointer auf Blockanfang setzen
+  ptr=block_adr;
+
+  // Laenge vom Block
+  value1=*(ptr++);
+  value2=*(ptr++);
+  block_len=(value2<<8)|value1;
+  if(block_len==0xFFFF) {
+    block_len=0x4000;
+    flag_compressed=0;
+  }
+  else {
+    flag_compressed=1;
+  }
+
+  // Page vom Block
+  flag_page=*(ptr++);
+
+  // next Block ausrechnen
+  next_block=(uint8_t*)(ptr+block_len);
+
+  // Startadresse setzen
+  if(flag_page==4) cur_addr=0x8000;
+  if(flag_page==5) cur_addr=0xC000;
+  if(flag_page==8) cur_addr=0x4000;
+
+  if(flag_compressed==1) {
+    //-----------------------
+    // komprimiert
+    //-----------------------
+    while(ptr<(block_adr+3+block_len)) {
+      value1=*(ptr++);
+      if(value1!=0xED) {
+        WrZ80(cur_addr++, value1);
+      }
+      else {
+        value2=*(ptr++);
+        if(value2!=0xED) {
+          WrZ80(cur_addr++, value1);
+          WrZ80(cur_addr++, value2);
+        }
+        else {
+          value1=*(ptr++);
+          value2=*(ptr++);
+          while(value1--) {
+            WrZ80(cur_addr++, value2);
+          }
+        }
+      }
+    }
+  }
+  else {
+    //-----------------------
+    // nicht komprimiert
+    //-----------------------
+    while(ptr<(block_adr+3+block_len)) {
+      value1=*(ptr++);
+      WrZ80(cur_addr++, value1);
+    }
+  }
+
+  return(next_block);
+}
+
+}
 
 
-void ZX_ReadFromFlash_SNA(Z80 *regs, const byte* data, uint16_t len)
+void load_image_sna(Z80 *regs, const byte* data, uint16_t len)
 {
   // Load Z80 registers from SNA
   regs->I        = data[ 0];
@@ -51,10 +133,11 @@ void ZX_ReadFromFlash_SNA(Z80 *regs, const byte* data, uint16_t len)
   regs->SP.B.l =data[23];
   regs->SP.B.h =data[24];
   regs->IFF = 0;
-  regs->IFF |= (((data[19]&0x04) >>2)?IFF_1:0); //regs->IFF1 = regs->IFF2 = ...
-  regs->IFF |= (((data[19]&0x04) >>2)?IFF_2:0);
+  regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
+  regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_2 : 0);
   regs->IFF |= (data[25]<< 1); // regs->IM = data[25];
   //regs->BorderColor = data[26];
+  emu::display::bordercolor = data[26] & 0x07;
 
   // load RAM from SNA
   for (int i = 0; i != 0xbfff; ++i)
@@ -75,7 +158,7 @@ void ZX_ReadFromFlash_SNA(Z80 *regs, const byte* data, uint16_t len)
 // Data = pointer to the start of data
 // Length = number of bytes
 //--------------------------------------------------------------
-void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
+void load_image_z80(Z80 *R, const uint8_t *data, uint16_t length)
 {
   const uint8_t *ptr;
   const uint8_t *akt_block,*next_block;
@@ -254,82 +337,4 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
 }
 
 
-//--------------------------------------------------------------
-// Internal function
-// Unpack and store a block of data
-// ( From flash ) the new version
-//--------------------------------------------------------------
-const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
-{
-  const uint8_t *ptr;
-  const uint8_t *next_block;
-  uint8_t value1,value2;
-  uint16_t block_len;
-  uint8_t flag_compressed=0;
-  uint8_t flag_page=0;
-  uint16_t cur_addr=0;
-
-  // pointer auf Blockanfang setzen
-  ptr=block_adr;
-
-  // Laenge vom Block
-  value1=*(ptr++);
-  value2=*(ptr++);
-  block_len=(value2<<8)|value1;
-  if(block_len==0xFFFF) {
-    block_len=0x4000;
-    flag_compressed=0;
-  }
-  else {
-    flag_compressed=1;
-  }
-
-  // Page vom Block
-  flag_page=*(ptr++);
-
-  // next Block ausrechnen
-  next_block=(uint8_t*)(ptr+block_len);
-
-  // Startadresse setzen
-  if(flag_page==4) cur_addr=0x8000;
-  if(flag_page==5) cur_addr=0xC000;
-  if(flag_page==8) cur_addr=0x4000;
-
-  if(flag_compressed==1) {
-    //-----------------------
-    // komprimiert
-    //-----------------------
-    while(ptr<(block_adr+3+block_len)) {
-      value1=*(ptr++);
-      if(value1!=0xED) {
-        WrZ80(cur_addr++, value1);
-      }
-      else {
-        value2=*(ptr++);
-        if(value2!=0xED) {
-          WrZ80(cur_addr++, value1);
-          WrZ80(cur_addr++, value2);
-        }
-        else {
-          value1=*(ptr++);
-          value2=*(ptr++);
-          while(value1--) {
-            WrZ80(cur_addr++, value2);
-          }
-        }
-      }
-    }
-  }
-  else {
-    //-----------------------
-    // nicht komprimiert
-    //-----------------------
-    while(ptr<(block_adr+3+block_len)) {
-      value1=*(ptr++);
-      WrZ80(cur_addr++, value1);
-    }
-  }
-
-  return(next_block);
-}
 
