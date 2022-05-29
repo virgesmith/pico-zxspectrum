@@ -4,10 +4,10 @@
 #include "sound.h"
 #include "display.h"
 #include "keyboard.h"
+#include "loader.h"
 
 extern "C" {
 #include "Z80.h"
-#include "zx_filetyp_z80.h"
 }
 
 #include <pico/stdlib.h>
@@ -114,8 +114,6 @@ namespace spec {
 
 void start()
 {
-  ZX_ReadFromFlash_Z80(&myCPU, ZX48_ROM, 16384);
-
   memset(ZX_RAM, 0, 0xC000);
   uint16_t len = (uint16_t)getchar() + (((uint16_t)getchar()) << 8);
   if (len)
@@ -127,7 +125,7 @@ void start()
       {
           buffer[i] = getchar();
       }
-      ZX_ReadFromFlash_SNA(&myCPU, buffer, len);
+      load_image_sna(&myCPU, buffer, len);
       free(buffer);
     }
   }
