@@ -127,7 +127,7 @@ void start()
       {
           buffer[i] = getchar();
       }
-      ZX_ReadFromFlash_Z80(&myCPU, buffer, len);
+      ZX_ReadFromFlash_SNA(&myCPU, buffer, len);
       free(buffer);
     }
   }

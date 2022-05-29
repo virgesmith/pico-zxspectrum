@@ -7,7 +7,6 @@
 // Web      : www.mikrocontroller-4u.de
 //--------------------------------------------------------------
 #include "zx_filetyp_z80.h"
-//#include "emuapi.h"
 
 //-------------------------------------------------------------
 extern uint8_t out_ram;
@@ -18,67 +17,55 @@ extern uint8_t out_ram;
 const uint8_t* p_decompFlashBlock(const uint8_t *block_adr);
 
 
-void ZX_ReadFromFlash_SNA(Z80 *regs, const char * filename)
+void ZX_ReadFromFlash_SNA(Z80 *regs, const byte* data, uint16_t len)
 {
-  uint8_t snafile[27];
-  int h = fileOpen(filename, "r");
-  if (h) {
-    if (fileRead(&snafile[0], sizeof(snafile), h) == sizeof(snafile)) {
-      // Load Z80 registers from SNA
-      regs->I        = snafile[ 0];
-      regs->HL1.B.l  = snafile[ 1];
-      regs->HL1.B.h  = snafile[ 2];
-      regs->DE1.B.l  = snafile[ 3];
-      regs->DE1.B.h  = snafile[ 4];
-      regs->BC1.B.l  = snafile[ 5];
-      regs->BC1.B.h  = snafile[ 6];
-      regs->AF1.B.l  = snafile[ 7];
-      regs->AF1.B.h  = snafile[ 8];
-      regs->HL.B.l   = snafile[ 9];
-      regs->HL.B.h   = snafile[10];
-      regs->DE.B.l   = snafile[11];
-      regs->DE.B.h   = snafile[12];
-      regs->BC.B.l   = snafile[13];
-      regs->BC.B.h   = snafile[14];
-      regs->IY.B.l = snafile[15];
-      regs->IY.B.h = snafile[16];
-      regs->IX.B.l = snafile[17];
-      regs->IX.B.h = snafile[18];
+  // Load Z80 registers from SNA
+  regs->I        = data[ 0];
+  regs->HL1.B.l  = data[ 1];
+  regs->HL1.B.h  = data[ 2];
+  regs->DE1.B.l  = data[ 3];
+  regs->DE1.B.h  = data[ 4];
+  regs->BC1.B.l  = data[ 5];
+  regs->BC1.B.h  = data[ 6];
+  regs->AF1.B.l  = data[ 7];
+  regs->AF1.B.h  = data[ 8];
+  regs->HL.B.l   = data[ 9];
+  regs->HL.B.h   = data[10];
+  regs->DE.B.l   = data[11];
+  regs->DE.B.h   = data[12];
+  regs->BC.B.l   = data[13];
+  regs->BC.B.h   = data[14];
+  regs->IY.B.l = data[15];
+  regs->IY.B.h = data[16];
+  regs->IX.B.l = data[17];
+  regs->IX.B.h = data[18];
  //#define IFF_1       0x01       /* IFF1 flip-flop             */
 //#define IFF_IM1     0x02       /* 1: IM1 mode                */
 //#define IFF_IM2     0x04       /* 1: IM2 mode                */
 //#define IFF_2       0x08       /* IFF2 flip-flop             */
 //#define IFF_EI      0x20       /* 1: EI pending              */
 //#define IFF_HALT    0x80       /* 1: CPU HALTed              */
-      regs->R = snafile[20]; //R.W
-      regs->AF.B.l = snafile[21];
-      regs->AF.B.h = snafile[22];
-      regs->SP.B.l =snafile[23];
-      regs->SP.B.h =snafile[24];
-      regs->IFF = 0;
-      regs->IFF |= (((snafile[19]&0x04) >>2)?IFF_1:0); //regs->IFF1 = regs->IFF2 = ...
-      regs->IFF |= (((snafile[19]&0x04) >>2)?IFF_2:0);
-      regs->IFF |= (snafile[25]<< 1); // regs->IM = snafile[25];
-      //regs->BorderColor = snafile[26];
+  regs->R = data[20]; //R.W
+  regs->AF.B.l = data[21];
+  regs->AF.B.h = data[22];
+  regs->SP.B.l =data[23];
+  regs->SP.B.h =data[24];
+  regs->IFF = 0;
+  regs->IFF |= (((data[19]&0x04) >>2)?IFF_1:0); //regs->IFF1 = regs->IFF2 = ...
+  regs->IFF |= (((data[19]&0x04) >>2)?IFF_2:0);
+  regs->IFF |= (data[25]<< 1); // regs->IM = data[25];
+  //regs->BorderColor = data[26];
 
-
-
-      // load RAM from SNA
-      int direc;
-      uint8_t b;
-      for (direc=0;direc!=0xbfff;direc++)
-      {
-        fileRead(&b, 1, h);
-        WrZ80(direc+0x4000, b);
-      }
-      fileClose(h);
-      // SP to PC for SNA run
-      regs->PC.B.l = RdZ80(regs->SP.W);
-      regs->SP.W++;
-      regs->PC.B.h = RdZ80(regs->SP.W);
-      regs->SP.W++;
-    }
+  // load RAM from SNA
+  for (int i = 0; i != 0xbfff; ++i)
+  {
+    WrZ80(i + 0x4000, data[27 + i]);
   }
+  // SP to PC for SNA run
+  regs->PC.B.l = RdZ80(regs->SP.W);
+  regs->SP.W++;
+  regs->PC.B.h = RdZ80(regs->SP.W);
+  regs->SP.W++;
 }
 
 //--------------------------------------------------------------
