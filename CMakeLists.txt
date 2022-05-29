@@ -24,7 +24,7 @@ set(PICOSPECCY_SOURCES
 		src/spec.cpp
 		src/zx_filetyp_z80.c
 		src/spectrum_rom.cpp
-		src/emuapi.cpp
+		src/sound.cpp
 		src/display.cpp
 		src/keyboard.cpp
 		src/picospeccy.cpp
