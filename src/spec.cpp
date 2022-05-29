@@ -1,8 +1,9 @@
 #include "spec.h"
 
 #include "spectrum_rom.h"
-#include "emuapi.h"
+#include "sound.h"
 #include "display.h"
+#include "keyboard.h"
 
 extern "C" {
 #include "Z80.h"
@@ -131,7 +132,7 @@ void start()
     }
   }
 
-  emu::sndInit();
+  emu::sound::init();
 }
 
 byte* init()
@@ -186,7 +187,7 @@ void step()
 
 void input(int bClick)
 {
-  ihk = emu::readUsbSerial();
+  ihk = emu::keyboard::readUsbSerial();
 }
 
 }
@@ -221,7 +222,7 @@ void buzz(int val, int currentTstates)
   lastBuzzCycle = currentTstates;
   lastBuzzVal = val;
 #else
-  emu::sndPlayBuzz(pulse_size,val);
+  emu::sound::playBuzz(pulse_size,val);
 #endif
 }
 

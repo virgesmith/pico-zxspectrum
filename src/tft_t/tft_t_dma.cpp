@@ -72,9 +72,9 @@ static const uint8_t init_commands[] = {
 
 
 TFT_T_DMA::TFT_T_DMA() :
+  _rst(TFT_RST),
   _cs(TFT_CS),
   _dc(TFT_DC),
-  _rst(TFT_RST),
   _mosi(TFT_MOSI),
   _sclk(TFT_SCLK),
   //_miso = TFT_MISO;
@@ -342,13 +342,12 @@ void TFT_T_DMA::drawSpriteNoDma(int16_t x, int16_t y, const uint16_t *bitmap, ui
     }
   }
 
-
   //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
   digitalWrite(_cs, 0);
   setArea(arx, ary, arx+arw-1, ary+arh-1);
 
   bitmap = bitmap + bmp_offy*w + bmp_offx;
-  for (int row=0;row<arh; row++)
+  for (int row=0; row < arh; row++)
   {
     bmp_ptr = (uint16_t*)bitmap;
     for (int col=0;col<arw; col++)
@@ -371,7 +370,7 @@ void TFT_T_DMA::drawSpriteNoDma(int16_t x, int16_t y, const uint16_t *bitmap, ui
 void TFT_T_DMA::drawTextNoDma(int16_t x, int16_t y, const char * text, uint16_t fgcolor, uint16_t bgcolor, bool doublesize) {
   uint16_t c;
   while ((c = *text++)) {
-    const unsigned char * charpt=&font8x8[c][0];
+    const uint8_t* charpt=&font8x8[c][0];
 
     //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
     digitalWrite(_cs, 0);
@@ -494,7 +493,6 @@ static void setDmaStruct() {
   uint32_t remaining = TFT_HEIGHT*TFT_WIDTH*2;
   int i=0;
   nbTransfer = 0;
-  uint16_t col=RGBVAL16(0x00,0x00,0x00);;
   while (remaining > 0) {
     uint16_t * fb = blocks[i];
     int32_t len = (remaining >= (LINES_PER_BLOCK*TFT_WIDTH*2)?LINES_PER_BLOCK*TFT_WIDTH*2:remaining);

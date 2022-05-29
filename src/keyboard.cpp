@@ -1,59 +1,38 @@
-#include "emuapi.h"
+#include "keyboard.h"
 
 extern "C" {
 #include "iopins.h"
 }
 
 
-#include "pico.h"
 #include "pico/stdlib.h"
-//#include "hardware/adc.h"
 
-#include <cstdio>
-#include <cstring>
-
-
-// #define MAX_FILENAME_PATH   64
-// #define NB_FILE_HANDLER     4
-// #define AUTORUN_FILENAME    "autorun.txt"
-
+#include <cstdint>
 
 namespace {
 
-unsigned char keymatrix[6];
-int keymatrix_hitrow=-1;
+int keymatrix_hitrow = -1;
+byte keymatrix[6];
+uint16_t bLastState;
+uint32_t last_t_ms = 0;
+bool ledflash_toggle=false;
+
 bool key_fn=false;
 bool key_alt=false;
 uint32_t keypress_t_ms=0;
-uint32_t last_t_ms=0;
 uint32_t hundred_ms_cnt=0;
-bool ledflash_toggle=false;
 
-uint16_t bLastState;
-
-// TODO int -> size_t
-
-// char malbuf[EXTRA_HEAP];
-// int malbufpt = malbuf;
 
 }
 
-// namespace emu {
-// void drawText(unsigned short x, unsigned short y, const char * text, unsigned short fgcolor, unsigned short bgcolor, int doublesize)
-// {
-//   tft.drawText(x, y, text, fgcolor, bgcolor, doublesize?true:false);
-// }
-
-// }
-
-int emu::readKeys()
+uint16_t emu::keyboard::readKeys()
 {
   uint16_t retval = 0;
 
   keymatrix_hitrow = -1;
-  unsigned char row;
-  unsigned short cols[6]={KCOLOUT1,KCOLOUT2,KCOLOUT3,KCOLOUT4,KCOLOUT5,KCOLOUT6};
-  unsigned char keymatrixtmp[6];
+  byte row;
+  uint16_t cols[6] = {KCOLOUT1,KCOLOUT2,KCOLOUT3,KCOLOUT4,KCOLOUT5,KCOLOUT6};
+  byte keymatrixtmp[6];
 
   for (int i=0;i<6;i++){
     gpio_set_dir(cols[i], GPIO_OUT);
@@ -131,8 +110,8 @@ int emu::readKeys()
 
 #ifdef SWAP_ALT_DEL
   // Swap ALT and DEL
-  unsigned char alt = keymatrixtmp[0] & 0x02;
-  unsigned char del = keymatrixtmp[5] & 0x20;
+  byte alt = keymatrixtmp[0] & 0x02;
+  byte del = keymatrixtmp[5] & 0x20;
   keymatrixtmp[0] &= ~0x02;
   keymatrixtmp[5] &= ~0x20;
   if (alt) keymatrixtmp[5] |= 0x20;
@@ -253,10 +232,10 @@ int emu::readKeys()
   {
   }
 
-  return (retval);
+  return retval;
 }
 
-unsigned short emu::debounceLocalKeys()
+uint16_t emu::keyboard::debounceLocalKeys()
 {
   uint16_t bCurState = readKeys();
   uint16_t bClick = bCurState & ~bLastState;
@@ -266,9 +245,9 @@ unsigned short emu::debounceLocalKeys()
 }
 
 
-unsigned char emu::readUsbSerial() {
+byte emu::keyboard::readUsbSerial() {
   // mapping handled on client side now
-  unsigned char c = getchar_timeout_us(0);
+  byte c = getchar_timeout_us(0);
   if (c == 255)
     c = 0;
   return c;
@@ -338,34 +317,3 @@ unsigned char emu::readUsbSerial() {
 
 // int emu_setKeymap(int index) {
 // }
-
-
-#include "AudioPlaySystem.h"
-AudioPlaySystem mymixer;
-#include "hardware/pwm.h"
-
-void emu::sndInit()
-{
-    // uses core1
-    // tft.begin_audio(256, mymixer.snd_Mixer);
-    // mymixer.start();
-    // gpio_init(AUDIO_PIN);
-    // gpio_set_dir(AUDIO_PIN, GPIO_OUT);
-}
-
-void emu::sndPlaySound(int chan, int volume, int freq)
-{
-    if (chan < 6)
-    {
-        mymixer.sound(chan, freq, volume);
-    }
-}
-
-void emu::sndPlayBuzz(int size, int val)
-{
-#ifndef CUSTOM_SND
-    // gpio_put(AUDIO_PIN, (val?1:0));
-    pwm_set_gpio_level(AUDIO_PIN, (val ? 255 : 128));
-#endif
-}
-

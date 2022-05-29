@@ -1,5 +1,5 @@
 //--------------------------------------------------------------
-// File derived from: 
+// File derived from:
 // Datum    : 27.01.2014
 // Version  : 1.0
 // Autor    : UB
@@ -21,8 +21,9 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr);
 void ZX_ReadFromFlash_SNA(Z80 *regs, const char * filename)
 {
   uint8_t snafile[27];
-  if (emu_FileOpen(filename)) {
-    if (emu_FileRead(&snafile[0], sizeof(snafile)) == sizeof(snafile)) {
+  int h = fileOpen(filename, "r");
+  if (h) {
+    if (fileRead(&snafile[0], sizeof(snafile), h) == sizeof(snafile)) {
       // Load Z80 registers from SNA
       regs->I        = snafile[ 0];
       regs->HL1.B.l  = snafile[ 1];
@@ -60,23 +61,23 @@ void ZX_ReadFromFlash_SNA(Z80 *regs, const char * filename)
       regs->IFF |= (snafile[25]<< 1); // regs->IM = snafile[25];
       //regs->BorderColor = snafile[26];
 
-      
+
 
       // load RAM from SNA
       int direc;
       uint8_t b;
       for (direc=0;direc!=0xbfff;direc++)
       {
-        emu_FileRead(&b, 1);
+        fileRead(&b, 1, h);
         WrZ80(direc+0x4000, b);
       }
-      emu_FileClose();
+      fileClose(h);
       // SP to PC for SNA run
       regs->PC.B.l = RdZ80(regs->SP.W);
       regs->SP.W++;
       regs->PC.B.h = RdZ80(regs->SP.W);
-      regs->SP.W++;                    
-    }  
+      regs->SP.W++;
+    }
   }
 }
 
@@ -116,7 +117,7 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
   R->HL.B.h=*(ptr++); // H [5]
 
   // PC [6+7]
-  value1=*(ptr++); 
+  value1=*(ptr++);
   value2=*(ptr++);
   R->PC.W=(value2<<8)|value1;
   if(R->PC.W==0x0000) {
@@ -124,7 +125,7 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
   }
   else {
     flag_version=0;
-  } 
+  }
 
   // SP [8+9]
   value1=*(ptr++);
@@ -133,9 +134,9 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
 
   R->I=*(ptr++); // I [10]
   R->R=*(ptr++); // R [11]
-  
+
   // Comressed-Flag & Border [12]
-  value1=*(ptr++); 
+  value1=*(ptr++);
   value2=((value1&0x0E)>>1);
   OutZ80(0xFE, value2); // BorderColor
   if((value1&0x20)!=0) {
@@ -160,7 +161,7 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
   R->IX.B.h=*(ptr++); // I [26]
 
   // Interrupt-Flag [27]
-  value1=*(ptr++); 
+  value1=*(ptr++);
   if(value1!=0) {
     // EI
     R->IFF|=IFF_2|IFF_EI;
@@ -171,7 +172,7 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
   }
   value1=*(ptr++); // nc [28]
   // Interrupt-Mode [29]
-  value1=*(ptr++);  
+  value1=*(ptr++);
   if((value1&0x01)!=0) {
     R->IFF|=IFF_IM1;
   }
@@ -184,10 +185,10 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
   else {
     R->IFF&=~IFF_IM2;
   }
-  
+
   // restliche Register
   R->ICount   = R->IPeriod;
-  R->IRequest = INT_NONE; 
+  R->IRequest = INT_NONE;
   R->IBackup  = 0;
 
   //----------------------------------
@@ -196,7 +197,7 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
   //----------------------------------
 
   cur_addr=0x4000; // RAM start
-  
+
 
   if(flag_version==0) {
     //-----------------------
@@ -205,7 +206,7 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
     if(flag_compressed==1) {
       //-----------------------
       // compressed
-      //-----------------------      
+      //-----------------------
       while(ptr<(data+length)) {
         value1=*(ptr++);
         if(value1!=0xED) {
@@ -213,7 +214,7 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
         }
         else {
           value2=*(ptr++);
-          if(value2!=0xED) { 
+          if(value2!=0xED) {
             WrZ80(cur_addr++, value1);
             WrZ80(cur_addr++, value2);
           }
@@ -242,15 +243,15 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
     // new Version
     //-----------------------
     // Header Laenge [30+31]
-    value1=*(ptr++); 
+    value1=*(ptr++);
     value2=*(ptr++);
     header_len=(value2<<8)|value1;
-    akt_block=(uint8_t*)(ptr+header_len); 
+    akt_block=(uint8_t*)(ptr+header_len);
     // PC [32+33]
-    value1=*(ptr++); 
+    value1=*(ptr++);
     value2=*(ptr++);
     R->PC.W=(value2<<8)|value1;
-    
+
     //------------------------
     // 1st block parsing
     //------------------------
@@ -260,8 +261,8 @@ void ZX_ReadFromFlash_Z80(Z80 *R, const uint8_t *data, uint16_t length)
     //------------------------
     while(next_block<data+length) {
       akt_block=next_block;
-      next_block=p_decompFlashBlock(akt_block); 
-    } 
+      next_block=p_decompFlashBlock(akt_block);
+    }
   }
 }
 
@@ -295,12 +296,12 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
   else {
     flag_compressed=1;
   }
- 
+
   // Page vom Block
   flag_page=*(ptr++);
-  
+
   // next Block ausrechnen
-  next_block=(uint8_t*)(ptr+block_len); 
+  next_block=(uint8_t*)(ptr+block_len);
 
   // Startadresse setzen
   if(flag_page==4) cur_addr=0x8000;
@@ -318,7 +319,7 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
       }
       else {
         value2=*(ptr++);
-        if(value2!=0xED) { 
+        if(value2!=0xED) {
           WrZ80(cur_addr++, value1);
           WrZ80(cur_addr++, value2);
         }
@@ -337,11 +338,11 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
     // nicht komprimiert
     //-----------------------
     while(ptr<(block_adr+3+block_len)) {
-      value1=*(ptr++); 
-      WrZ80(cur_addr++, value1);  
+      value1=*(ptr++);
+      WrZ80(cur_addr++, value1);
     }
   }
 
-  return(next_block); 
+  return(next_block);
 }
 
