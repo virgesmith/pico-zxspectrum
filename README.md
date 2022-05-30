@@ -3,26 +3,28 @@
 It's been 40 years... I still remember the computery smell when I unboxed mine at Xmas (I *think* 1983)
 
 So for old times' sake here's a ZX Spectrum emulator for Raspberry Pi pico, using:
-- screen: a 5cm 320x240 TFT display as screen.
-- keyboard: USB serial connection for now
-- sound: not sure yet
-- cassette recorder: the plan is to transmit tapes over USB serial...
 
+- screen: a 5cm 320x240 TFT display as screen.
+- keyboard: USB serial connection, which also supports image loading
+- sound: not sure yet...
+- cassette recorder: the plan is to transmit tapes over USB serial, possibly at the original speed...
 
 ## Status
 
 - [X] display: fully operational
 - [X] keyboard: serial works using a basic python client
 - [ ] sound
-- [ ] cassette recorder
+- [ ] real-time(?) tape loading
+- [X] image loading over USB serial: Z80 and SNA formats supported
+- [ ] image saving over USB serial
 
 ![boot](./doc/boot.jpg)
 ![code](./doc/code.jpg)
-![output](./doc/output.jpg)
+![game](./doc/game.jpg)
 
 ## Build
 
-Requires pico-sdk (and probably its dependencies e.g. tinyUSB...). In the repo root:
+Requires [pico-sdk](https://github.com/raspberrypi/pico-sdk) (and its dependencies e.g. tinyUSB...). In the repo root:
 
 ```sh
 mkdir -p build && cd build
@@ -41,20 +43,23 @@ cp build/picozxspectrum.uf2 /media/$USER/RPI-RP2/
 
 ## Use
 
-Rudimentary keyboard driver written in python and depends on pyserial and pynput. Very much a work in progress... you can specify a .z80 format image to load on start. YMMV
+Interaction requires a (rudimentary) keyboard driver written in python and depends on pyserial and pynput. It will also load an image (Z80 or SNA) on startup:
 
 ```sh
-python zxkb.py [image]
+python zx.py [image]
 ```
 
-This is useful:
+Keys map closely to the ZX Spectrum keyboard (below), with shift=caps shift, left ctrl=symbol shift. Shift-left-ctrl enters extended mode.
+Unmapped keys such as backspace and the arrow keys emulate shift-0,5,6,7,8
+
+Esc followed by ctrl-C exits the listener.
 
 ![spectrum-48-keyboard](./doc/spectrum-48-keyboard.png)
 
-Shift is caps shift, left ctrl is symbol shift. Shift-left-ctrl (and tab) enters extended mode. Esc followed by ctrl-C exits.
-
 ## Acknowledgements
 
-Most of the C and C++ source code is copied or modified from: https://github.com/Jean-MarcHarvengt/MCUME
+Much of the C and C++ source code originates from: https://github.com/Jean-MarcHarvengt/MCUME. Copyright notices, where present, have been preserved.
+
+This was also very useful: http://www.breakintoprogram.co.uk/computers/zx-spectrum.
 
 Keyboard layout from https://dotneteer.github.io/spectnetide/getting-started/use-keyboard-tool

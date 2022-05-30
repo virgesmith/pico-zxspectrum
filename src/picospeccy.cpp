@@ -11,35 +11,32 @@
 
 #include <cstdio>
 
-
 emu::display::RGB PALETTE[16] = {
-  {   0,   0,   0},
-  {   0,   0, 205},
-  { 205,   0,   0},
-  { 205,   0, 205},
-  {   0, 205,   0},
-  {   0, 205, 205},
-  { 205, 205,   0},
-  { 212, 212, 212},
-  {   0,   0,   0},
-  {   0,   0, 255},
-  { 255,   0,   0},
-  { 255,   0, 255},
-  {   0, 255,   0},
-  {   0, 255, 255},
-  { 255, 255,   0},
-  { 255, 255, 255}
+  {0, 0, 0},
+  {0, 0, 205},
+  {205, 0, 0},
+  {205, 0, 205},
+  {0, 205, 0},
+  {0, 205, 205},
+  {205, 205, 0},
+  {212, 212, 212},
+  {0, 0, 0},
+  {0, 0, 255},
+  {255, 0, 0},
+  {255, 0, 255},
+  {0, 255, 0},
+  {0, 255, 255},
+  {255, 255, 0},
+  {255, 255, 255}
 };
 
-
-bool repeating_timer_callback(struct repeating_timer *t)
+bool repeating_timer_callback(struct repeating_timer* t)
 {
-  uint16_t bClick = emu::keyboard::debounceLocalKeys();
+  uint16_t bClick = 0;
   spec::input(bClick);
   emu::display::toggle_vbl();
   return true;
 }
-
 
 int main()
 {
@@ -54,7 +51,7 @@ int main()
   //    set_sys_clock_khz(250000, true);
   stdio_init_all();
 
-  byte* ram_start = spec::init();
+  byte *ram_start = spec::init();
   spec::start();
   emu::display::init(ram_start, PALETTE);
 

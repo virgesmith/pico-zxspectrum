@@ -1,3 +1,4 @@
+from __future__ import annotations
 from pynput.keyboard import Key, KeyCode, Listener
 from serial import Serial
 from pathlib import Path
@@ -6,177 +7,164 @@ import sys
 
 DEVICE = "/dev/ttyACM0"
 BAUD_RATE = 115200
-CAPS_MASK = 128
-SYM_MASK = 64
-
-CAPS_SHIFT = 224
-SYM_SHIFT = 225
 
 keymap = {
-  KeyCode(char='1'): 30,
-  KeyCode(char='2'): 31,
-  KeyCode(char='3'): 32,
-  KeyCode(char='4'): 33,
-  KeyCode(char='5'): 34,
-  KeyCode(char='6'): 35,
-  KeyCode(char='7'): 36,
-  KeyCode(char='8'): 37,
-  KeyCode(char='9'): 38,
-  KeyCode(char='0'): 39,
-  KeyCode(char='!'): 30 + CAPS_MASK,
-  KeyCode(char='"'): 31 + CAPS_MASK,
-  KeyCode(char='£'): 32 + CAPS_MASK,
-  KeyCode(char='$'): 33 + CAPS_MASK,
-  KeyCode(char='%'): 34 + CAPS_MASK, Key.left: 34 + CAPS_MASK,
-  KeyCode(char='^'): 35 + CAPS_MASK, Key.down: 35 + CAPS_MASK,
-  KeyCode(char='&'): 36 + CAPS_MASK, Key.up: 36 + CAPS_MASK,
-  KeyCode(char='*'): 37 + CAPS_MASK, Key.right: 37 + CAPS_MASK,
-  KeyCode(char='('): 38 + CAPS_MASK, Key.alt_gr: 38 + CAPS_MASK,
-  KeyCode(char=')'): 39 + CAPS_MASK, Key.backspace: 39 + CAPS_MASK,
+  KeyCode(char='1'): ((3, 0),),
+  KeyCode(char='2'): ((3, 1),),
+  KeyCode(char='3'): ((3, 2),),
+  KeyCode(char='4'): ((3, 3),),
+  KeyCode(char='5'): ((3, 4),),
+  KeyCode(char='6'): ((4, 4),),
+  KeyCode(char='7'): ((4, 3),),
+  KeyCode(char='8'): ((4, 2),),
+  KeyCode(char='9'): ((4, 1),),
+  KeyCode(char='0'): ((4, 0),),
 
-  KeyCode(char='q'): 20,
-  KeyCode(char='w'): 26,
-  KeyCode(char='e'): 8 ,
-  KeyCode(char='r'): 21,
-  KeyCode(char='t'): 23,
-  KeyCode(char='y'): 28,
-  KeyCode(char='u'): 24,
-  KeyCode(char='i'): 12,
-  KeyCode(char='o'): 18,
-  KeyCode(char='p'): 19,
+  KeyCode(char='!'): ((3, 0),),
+  KeyCode(char='"'): ((3, 1),),
+  KeyCode(char='£'): ((3, 2),),
+  KeyCode(char='$'): ((3, 3),),
+  KeyCode(char='%'): ((3, 4),),
+  KeyCode(char='^'): ((4, 4),),
+  KeyCode(char='&'): ((4, 3),),
+  KeyCode(char='*'): ((4, 2),),
+  KeyCode(char='('): ((4, 1),),
+  KeyCode(char=')'): ((4, 0),),
 
-  KeyCode(char='Q'): 20 + CAPS_MASK,
-  KeyCode(char='W'): 26 + CAPS_MASK,
-  KeyCode(char='E'): 8  + CAPS_MASK,
-  KeyCode(char='R'): 21 + CAPS_MASK,
-  KeyCode(char='T'): 23 + CAPS_MASK,
-  KeyCode(char='Y'): 28 + CAPS_MASK,
-  KeyCode(char='U'): 24 + CAPS_MASK,
-  KeyCode(char='I'): 12 + CAPS_MASK,
-  KeyCode(char='O'): 18 + CAPS_MASK,
-  KeyCode(char='P'): 19 + CAPS_MASK,
+  KeyCode(char='q'): ((2, 0),),
+  KeyCode(char='w'): ((2, 1),),
+  KeyCode(char='e'): ((2, 2),),
+  KeyCode(char='r'): ((2, 3),),
+  KeyCode(char='t'): ((2, 4),),
+  KeyCode(char='y'): ((5, 4),),
+  KeyCode(char='u'): ((5, 3),),
+  KeyCode(char='i'): ((5, 2),),
+  KeyCode(char='o'): ((5, 1),),
+  KeyCode(char='p'): ((5, 0),),
 
-  KeyCode(char='a'): 4,
-  KeyCode(char='s'): 22,
-  KeyCode(char='d'): 7 ,
-  KeyCode(char='f'): 9,
-  KeyCode(char='g'): 10,
-  KeyCode(char='h'): 11,
-  KeyCode(char='j'): 13,
-  KeyCode(char='k'): 14,
-  KeyCode(char='l'): 15,
-  Key.enter: 40,
+  KeyCode(char='Q'): ((2, 0),),
+  KeyCode(char='W'): ((2, 1),),
+  KeyCode(char='E'): ((2, 2),),
+  KeyCode(char='R'): ((2, 3),),
+  KeyCode(char='T'): ((2, 4),),
+  KeyCode(char='Y'): ((5, 4),),
+  KeyCode(char='U'): ((5, 3),),
+  KeyCode(char='I'): ((5, 2),),
+  KeyCode(char='O'): ((5, 1),),
+  KeyCode(char='P'): ((5, 0),),
 
-  KeyCode(char='A'): 4  + CAPS_MASK,
-  KeyCode(char='S'): 22 + CAPS_MASK,
-  KeyCode(char='D'): 7  + CAPS_MASK,
-  KeyCode(char='F'): 9  + CAPS_MASK,
-  KeyCode(char='G'): 10 + CAPS_MASK,
-  KeyCode(char='H'): 11 + CAPS_MASK,
-  KeyCode(char='J'): 13 + CAPS_MASK,
-  KeyCode(char='K'): 14 + CAPS_MASK,
-  KeyCode(char='L'): 15 + CAPS_MASK,
+  KeyCode(char='a'): ((1, 0),),
+  KeyCode(char='s'): ((1, 1),),
+  KeyCode(char='d'): ((1, 2),),
+  KeyCode(char='f'): ((1, 3),),
+  KeyCode(char='g'): ((1, 4),),
+  KeyCode(char='h'): ((6, 4),),
+  KeyCode(char='j'): ((6, 3),),
+  KeyCode(char='k'): ((6, 2),),
+  KeyCode(char='l'): ((6, 1),),
+  Key.enter: ((6, 0),),
 
-  # Caps shift
-  KeyCode(char='z'): 29,
-  KeyCode(char='x'): 27,
-  KeyCode(char='c'): 6 ,
-  KeyCode(char='v'): 25,
-  KeyCode(char='b'): 5 ,
-  KeyCode(char='n'): 17,
-  KeyCode(char='m'): 16,
-  # Sym shift
-  Key.space: 44,
+  KeyCode(char='A'): ((1, 0),),
+  KeyCode(char='S'): ((1, 1),),
+  KeyCode(char='D'): ((1, 2),),
+  KeyCode(char='F'): ((1, 3),),
+  KeyCode(char='G'): ((1, 4),),
+  KeyCode(char='H'): ((6, 4),),
+  KeyCode(char='J'): ((6, 3),),
+  KeyCode(char='K'): ((6, 2),),
+  KeyCode(char='L'): ((6, 1),),
 
-  # Caps shift
-  KeyCode(char='Z'): 29 + CAPS_MASK,
-  KeyCode(char='X'): 27 + CAPS_MASK,
-  KeyCode(char='C'): 6  + CAPS_MASK,
-  KeyCode(char='V'): 25 + CAPS_MASK,
-  KeyCode(char='B'): 5  + CAPS_MASK,
-  KeyCode(char='N'): 17 + CAPS_MASK,
-  KeyCode(char='M'): 16 + CAPS_MASK,
-  # Sym shift
-  Key.space: 44 + CAPS_MASK, # break
+  Key.shift: ((0, 0),), #Key.shift_l: (0, 0), Key.shift_r: (0, 0),
+  KeyCode(char='z'): ((0, 1),),
+  KeyCode(char='x'): ((0, 2),),
+  KeyCode(char='c'): ((0, 3),),
+  KeyCode(char='v'): ((0, 4),),
+  KeyCode(char='b'): ((7, 4),),
+  KeyCode(char='n'): ((7, 3),),
+  KeyCode(char='m'): ((7, 2),),
+  Key.ctrl_r: ((7, 1),),
+  Key.space: ((7, 0),),
 
-  # for convenience
-  Key.caps_lock: 31 + CAPS_MASK,
-  KeyCode(char=","): 17 + SYM_MASK,
-  KeyCode(char="."): 16 + SYM_MASK,
-  KeyCode(char="<"): 21 + SYM_MASK,
-  KeyCode(char=">"): 23 + SYM_MASK,
-  KeyCode(char="?"): 6 + SYM_MASK,
-  KeyCode(char="/"): 25 + SYM_MASK,
-  KeyCode(char=";"): 18 + SYM_MASK,
-  KeyCode(char=":"): 29 + SYM_MASK,
+  KeyCode(char='Z'): ((0, 1),),
+  KeyCode(char='X'): ((0, 2),),
+  KeyCode(char='C'): ((0, 3),),
+  KeyCode(char='V'): ((0, 4),),
+  KeyCode(char='B'): ((7, 4),),
+  KeyCode(char='N'): ((7, 3),),
+  KeyCode(char='M'): ((7, 2),),
 
-  KeyCode(char="-"): 13 + SYM_MASK,
-  KeyCode(char="="): 15 + SYM_MASK,
-  KeyCode(char="_"): 39 + SYM_MASK,
-  KeyCode(char="+"): 14 + SYM_MASK,
-
-  # extended mode test
-  #Key.tab: CAPS_MASK + SYM_MASK,
+  # combo shortcuts
+  Key.left:      ((0, 0), (3, 4)),
+  Key.down:      ((0, 0), (4, 4)),
+  Key.up:        ((0, 0), (4, 3)),
+  Key.right:     ((0, 0), (4, 2)),
+  Key.alt_gr:    ((0, 0), (4, 1)),
+  Key.backspace: ((0, 0), (4, 0)),
 }
 
-def main(filename):
+
+def get_mode(filename: str) -> int:
+  if not filename:
+    return 0
+  if filename.endswith(".z80"):
+    return 1
+  elif filename.endswith(".sna"):
+    return 2
+  return 0
+
+def main(filename: str | None) -> None:
 
   if not Path(DEVICE).exists:
     raise FileNotFoundError("usb device not found")
   zxspectrum = Serial(DEVICE, BAUD_RATE)
 
-
-  caps = False
-  sym = False
-
+  kbd_ram = bytearray.fromhex("ffffffffffffffff")
 
   def on_press(key: Key):
-    # print(key)
-    nonlocal caps, sym
     if key == Key.esc:
       exit(0)
-    if key == Key.shift:
-      caps = True
-    elif key == Key.ctrl_r:
-      sym = True
-      if caps and sym:
-        zxspectrum.write((CAPS_MASK + SYM_MASK).to_bytes(1, byteorder='little'))
-    else:
-      code = keymap.get(key, 0)
-      if sym:
-        code += SYM_MASK
-      # print(f'{"shift-" if caps else ""}{"sym-" if sym else ""}{key} -> {code}')
-      zxspectrum.write(code.to_bytes(1, byteorder='little'))
 
+    codes = keymap.get(key, ())
+    if not codes:
+      print(f"{key} not mapped")
+      return
+
+    for port, bit in codes:
+      kbd_ram[port] &= ~(1 << bit)
+    zxspectrum.write((0).to_bytes(1, 'little'))
+    zxspectrum.write(kbd_ram)
+    # print(f"{keymap[key]} {kbd_ram.hex()}")
 
   def on_release(key: Key):
-    nonlocal caps, sym
-    if key == Key.shift:
-      caps = False
-      #device.write(CAPS_SHIFT.to_bytes(1, byteorder='little'))
-    elif key == Key.ctrl_r:
-      sym = False
-      #device.write(SYM_SHIFT.to_bytes(1, byteorder='little'))
+    codes = keymap.get(key, ())
+    if not codes:
+      return
 
-  if filename:
+    for port, bit in codes:
+      kbd_ram[port] |= (1 << bit)
+    zxspectrum.write((0).to_bytes(1, 'little'))
+    zxspectrum.write(kbd_ram)
+    # print(f"{keymap[key]} {kbd_ram.hex()}")
+
+  mode = get_mode(filename)
+  zxspectrum.write(mode.to_bytes(1, 'little'))
+
+  if mode:
     with open(filename, "rb") as fh:
       data = fh.read()
       n = len(data)
       zxspectrum.write(n.to_bytes(2, 'little'))
       zxspectrum.write(data)
-  else:
-    zxspectrum.write((0).to_bytes(2, 'little'))
 
   with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
     while True:
-      pass
       #c0, t0, c1, t1 = [b for b in device.read(4)]
       #print(f"{c0}, {t0}, {c1}, {t1}")
       #b = zxspectrum.read(3)
       # print(f"{int.from_bytes(b[0], 'big')}, {int.from_bytes(b[1], 'big')}, {int.from_bytes(b[2]), 'big'}")
       #print(f"{b[0]}, {b[1]}, {b[2]}")
 
-  listener.join()
+      listener.join()
 
 if __name__ == "__main__":
   print("esc, ctrl-C to exit")
