@@ -6,10 +6,6 @@
 #include "keyboard.h"
 #include "loader.h"
 
-extern "C" {
-#include "Z80.h"
-}
-
 #include <pico/stdlib.h>
 
 #include <cstdio>
@@ -23,10 +19,11 @@ extern "C" {
 
 #define BASERAM 0x4000
 
+Z80 spec::myCPU;
+
 namespace {
 
 byte ZX_RAM[0xC000];                    // 48k RAM
-Z80 myCPU;
 byte key_ram[8]={0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Keyboard buffer
 byte out_ram;                            // Output (fe port)
 byte kempston_ram;                       // Kempston-Joystick Buffer
@@ -77,10 +74,10 @@ void start()
       switch(mode)
       {
         case Z80_IMG:
-          load_image_z80(&myCPU, buffer, len);
+          load_image_z80(&spec::myCPU, buffer, len);
           break;
         case SNA_IMG:
-          load_image_sna(&myCPU, buffer, len);
+          load_image_sna(&spec::myCPU, buffer, len);
           break;
       }
       free(buffer);
@@ -93,7 +90,7 @@ byte* init()
 {
   memset(ZX_RAM, 0, sizeof(ZX_RAM));
 
-  ResetZ80(&myCPU, CYCLES_PER_FRAME);
+  ResetZ80(&spec::myCPU, CYCLES_PER_FRAME);
   return ZX_RAM;
 }
 
@@ -190,7 +187,7 @@ void OutZ80(word port,byte value)
     // t = (CYCLES_PER_STEP-myCPU.ICount) - t;
     // printf("%c%c%c", (value & 0x1f), (byte)(t>>8), (byte)(t & 0xff));
     // printf("%c%c", (byte)(t >> 8), (byte)(t &0xff));
-    buzz(ear, CYCLES_PER_STEP-myCPU.ICount);
+    buzz(ear, CYCLES_PER_STEP-spec::myCPU.ICount);
     // TODO check if anything appears over serial....
     // printf("%d %d %d\n", bordercolor, mic, ear);
   }

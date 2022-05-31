@@ -102,25 +102,25 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
 void load_image_sna(Z80 *regs, const byte* data, uint16_t len)
 {
   // Load Z80 registers from SNA
-  regs->I        = data[ 0];
-  regs->HL1.B.l  = data[ 1];
-  regs->HL1.B.h  = data[ 2];
-  regs->DE1.B.l  = data[ 3];
-  regs->DE1.B.h  = data[ 4];
-  regs->BC1.B.l  = data[ 5];
-  regs->BC1.B.h  = data[ 6];
-  regs->AF1.B.l  = data[ 7];
-  regs->AF1.B.h  = data[ 8];
-  regs->HL.B.l   = data[ 9];
-  regs->HL.B.h   = data[10];
-  regs->DE.B.l   = data[11];
-  regs->DE.B.h   = data[12];
-  regs->BC.B.l   = data[13];
-  regs->BC.B.h   = data[14];
-  regs->IY.B.l = data[15];
-  regs->IY.B.h = data[16];
-  regs->IX.B.l = data[17];
-  regs->IX.B.h = data[18];
+  regs->I       = data[ 0];
+  regs->HL1.B.l = data[ 1];
+  regs->HL1.B.h = data[ 2];
+  regs->DE1.B.l = data[ 3];
+  regs->DE1.B.h = data[ 4];
+  regs->BC1.B.l = data[ 5];
+  regs->BC1.B.h = data[ 6];
+  regs->AF1.B.l = data[ 7];
+  regs->AF1.B.h = data[ 8];
+  regs->HL.B.l  = data[ 9];
+  regs->HL.B.h  = data[10];
+  regs->DE.B.l  = data[11];
+  regs->DE.B.h  = data[12];
+  regs->BC.B.l  = data[13];
+  regs->BC.B.h  = data[14];
+  regs->IY.B.l  = data[15];
+  regs->IY.B.h  = data[16];
+  regs->IX.B.l  = data[17];
+  regs->IX.B.h  = data[18];
  //#define IFF_1       0x01       /* IFF1 flip-flop             */
 //#define IFF_IM1     0x02       /* 1: IM1 mode                */
 //#define IFF_IM2     0x04       /* 1: IM2 mode                */
@@ -149,6 +149,59 @@ void load_image_sna(Z80 *regs, const byte* data, uint16_t len)
   regs->SP.W++;
   regs->PC.B.h = RdZ80(regs->SP.W);
   regs->SP.W++;
+}
+
+byte* save_image_sna()
+{
+  byte* data = (byte*)malloc(SNA_LEN);
+  if (!data)
+    return nullptr;
+
+  // Save Z80 registers into SNA
+  data[ 0] = spec::myCPU.I      ;
+  data[ 1] = spec::myCPU.HL1.B.l;
+  data[ 2] = spec::myCPU.HL1.B.h;
+  data[ 3] = spec::myCPU.DE1.B.l;
+  data[ 4] = spec::myCPU.DE1.B.h;
+  data[ 5] = spec::myCPU.BC1.B.l;
+  data[ 6] = spec::myCPU.BC1.B.h;
+  data[ 7] = spec::myCPU.AF1.B.l;
+  data[ 8] = spec::myCPU.AF1.B.h;
+  data[ 9] = spec::myCPU.HL.B.l ;
+  data[10] = spec::myCPU.HL.B.h ;
+  data[11] = spec::myCPU.DE.B.l;
+  data[12] = spec::myCPU.DE.B.h;
+  data[13] = spec::myCPU.BC.B.l;
+  data[14] = spec::myCPU.BC.B.h;
+  data[15] = spec::myCPU.IY.B.l;
+  data[16] = spec::myCPU.IY.B.h;
+  data[17] = spec::myCPU.IX.B.l;
+  data[18] = spec::myCPU.IX.B.h;
+  data[19] = 0; // TODO
+  data[20] = spec::myCPU.R; //R.W
+  data[21] = spec::myCPU.AF.B.l;
+  data[22] = spec::myCPU.AF.B.h;
+  data[23] = spec::myCPU.SP.B.l;
+  data[24] = spec::myCPU.SP.B.h;
+  data[25] = 0; // TODO
+  // = regs->IFF = 0;
+  // = regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
+  // = regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_2 : 0);
+  // = regs->IFF |= (data[25]<< 1); // regs->IM = data[25];
+
+  data[26] = emu::display::bordercolor;
+
+  // load RAM from SNA
+  for (uint16_t i = 0; i < 0xc000; ++i)
+  {
+    data[27 + i] = 170; //RdZ80(i + 0x4000);
+  }
+  // SP to PC for SNA run
+  // regs->PC.B.l = RdZ80(regs->SP.W);
+  // regs->SP.W++;
+  // regs->PC.B.h = RdZ80(regs->SP.W);
+  // regs->SP.W++;
+  return data;
 }
 
 //--------------------------------------------------------------

@@ -112,6 +112,15 @@ def get_mode(filename: str) -> int:
     return 2
   return 0
 
+def get_snapshot(zxspectrum: Serial):
+  zxspectrum.write((1).to_bytes(1, 'little'))
+  length = zxspectrum.in_waiting
+  sna = zxspectrum.read(length) #49179)
+  print(f"read {length} bytes, should be 49179")
+  with open("test.sna", "wb") as fh:
+    fh.write(sna)
+  print("stub sna")
+
 def main(filename: str | None) -> None:
 
   if not Path(DEVICE).exists:
@@ -120,9 +129,13 @@ def main(filename: str | None) -> None:
 
   kbd_ram = bytearray.fromhex("ffffffffffffffff")
 
-  def on_press(key: Key):
+  def on_press(key: Key) -> None:
     if key == Key.esc:
       exit(0)
+
+    if key == Key.print_screen:
+      get_snapshot(zxspectrum)
+      return
 
     codes = keymap.get(key, ())
     if not codes:
@@ -135,7 +148,7 @@ def main(filename: str | None) -> None:
     zxspectrum.write(kbd_ram)
     # print(f"{keymap[key]} {kbd_ram.hex()}")
 
-  def on_release(key: Key):
+  def on_release(key: Key) -> None:
     codes = keymap.get(key, ())
     if not codes:
       return
