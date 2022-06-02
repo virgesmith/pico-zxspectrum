@@ -55,6 +55,8 @@ HWOptions hwopt = { 0xFF, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 
 namespace spec {
 
+bool dump_sna = false;
+
 void start()
 {
   memset(ZX_RAM, 0, 0xC000);
@@ -105,6 +107,25 @@ void step()
 #endif
     //busy_wait_us(1);
     //sleep_us(1);
+  }
+
+  if (dump_sna)
+  {
+    byte* image = save_image_sna();
+    if (!image)
+    {
+      printf("no mem!\n");
+    }
+    else
+    {
+      for (uint16_t i = 0; i < SNA_LEN; ++i)
+      {
+        printf("%02x", image[i]);
+      }
+      printf("\n");
+    }
+    free(image);
+    dump_sna = false;
   }
 
   IntZ80(&myCPU,INT_IRQ); // must be called every 20ms

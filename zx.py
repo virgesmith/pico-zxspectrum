@@ -2,7 +2,7 @@ from __future__ import annotations
 from pynput.keyboard import Key, KeyCode, Listener
 from serial import Serial
 from pathlib import Path
-#from time import sleep
+from datetime import datetime
 import sys
 
 DEVICE = "/dev/ttyACM0"
@@ -100,10 +100,20 @@ keymap = {
   Key.right:     ((0, 0), (4, 2)),
   Key.alt_gr:    ((0, 0), (4, 1)),
   Key.backspace: ((0, 0), (4, 0)),
+  KeyCode(char=","): ((7, 1), (7, 3)),
+  KeyCode(char="."): ((7, 1), (7, 2)),
+  KeyCode(char="/"): ((7, 1), (0, 4)),
+  KeyCode(char=";"): ((7, 1), (0, 4)),
+  KeyCode(char="-"): ((7, 1), (6, 3)),
+  KeyCode(char="="): ((7, 1), (6, 1)),
+  KeyCode(char="+"): ((7, 1), (6, 2)),
+  KeyCode(char=";"): ((7, 1), (5, 1)),
+  KeyCode(char=":"): ((7, 1), (0, 1)),
+
 }
 
 
-def get_mode(filename: str) -> int:
+def get_mode(filename: str | None) -> int:
   if not filename:
     return 0
   if filename.endswith(".z80"):
@@ -112,14 +122,35 @@ def get_mode(filename: str) -> int:
     return 2
   return 0
 
-def get_snapshot(zxspectrum: Serial):
+
+def load(zxspectrum: Serial, filename: str | None) -> None:
+  mode = get_mode(filename)
+  zxspectrum.write(mode.to_bytes(1, 'little'))
+
+  if mode:
+    with open(filename, "rb") as fh:
+      data = fh.read()
+      n = len(data)
+      zxspectrum.write(n.to_bytes(2, 'little'))
+      zxspectrum.write(data)
+
+
+def get_snapshot(zxspectrum: Serial) -> None:
   zxspectrum.write((1).to_bytes(1, 'little'))
-  length = zxspectrum.in_waiting
-  sna = zxspectrum.read(length) #49179)
-  print(f"read {length} bytes, should be 49179")
-  with open("test.sna", "wb") as fh:
-    fh.write(sna)
-  print("stub sna")
+  filename = f'zx{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}.sna'
+  with open(filename, "wb") as fh:
+    hex = zxspectrum.readline().rstrip().decode("utf-8")
+    sna = bytes.fromhex(hex)
+    if (len(sna) != 49179):
+      print(f"error received {len(sna)} bytes, expected 49179")
+    else:
+      print(f"wrote {len(sna)} bytes to {filename}")
+      fh.write(sna)
+
+
+def reset(zxspectrum: Serial) -> None:
+  zxspectrum.write((2).to_bytes(1, 'little'))
+
 
 def main(filename: str | None) -> None:
 
@@ -135,6 +166,10 @@ def main(filename: str | None) -> None:
 
     if key == Key.print_screen:
       get_snapshot(zxspectrum)
+      return
+
+    if key == Key.delete:
+      reset(zxspectrum)
       return
 
     codes = keymap.get(key, ())
@@ -159,15 +194,8 @@ def main(filename: str | None) -> None:
     zxspectrum.write(kbd_ram)
     # print(f"{keymap[key]} {kbd_ram.hex()}")
 
-  mode = get_mode(filename)
-  zxspectrum.write(mode.to_bytes(1, 'little'))
 
-  if mode:
-    with open(filename, "rb") as fh:
-      data = fh.read()
-      n = len(data)
-      zxspectrum.write(n.to_bytes(2, 'little'))
-      zxspectrum.write(data)
+  load(zxspectrum, filename)
 
   with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
     while True:
@@ -176,8 +204,8 @@ def main(filename: str | None) -> None:
       #b = zxspectrum.read(3)
       # print(f"{int.from_bytes(b[0], 'big')}, {int.from_bytes(b[1], 'big')}, {int.from_bytes(b[2]), 'big'}")
       #print(f"{b[0]}, {b[1]}, {b[2]}")
-
       listener.join()
+
 
 if __name__ == "__main__":
   print("esc, ctrl-C to exit")

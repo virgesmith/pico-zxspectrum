@@ -131,7 +131,7 @@ void TFT_T_DMA::setArea(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2) {
 }
 
 
-void TFT_T_DMA::begin(void) {
+void TFT_T_DMA::begin() {
   spi_init(TFT_SPIREG, SPICLOCK);
   spi_set_format(TFT_SPIREG, 8, SPI_MODE, SPI_CPHA_0, SPI_MSB_FIRST);
   gpio_set_function(_sclk , GPIO_FUNC_SPI);
@@ -296,157 +296,157 @@ void TFT_T_DMA::writeScreenNoDma(const uint16_t *pcolors) {
   //SPI.endTransaction();
 }
 
-void TFT_T_DMA::drawSpriteNoDma(int16_t x, int16_t y, const uint16_t *bitmap) {
-    drawSpriteNoDma(x,y,bitmap, 0,0,0,0);
-}
+// void TFT_T_DMA::drawSpriteNoDma(int16_t x, int16_t y, const uint16_t *bitmap) {
+//     drawSpriteNoDma(x,y,bitmap, 0,0,0,0);
+// }
 
-void TFT_T_DMA::drawSpriteNoDma(int16_t x, int16_t y, const uint16_t *bitmap, uint16_t arx, uint16_t ary, uint16_t arw, uint16_t arh)
-{
-  int bmp_offx = 0;
-  int bmp_offy = 0;
-  uint16_t *bmp_ptr;
+// void TFT_T_DMA::drawSpriteNoDma(int16_t x, int16_t y, const uint16_t *bitmap, uint16_t arx, uint16_t ary, uint16_t arw, uint16_t arh)
+// {
+//   int bmp_offx = 0;
+//   int bmp_offy = 0;
+//   uint16_t *bmp_ptr;
 
-  int w =*bitmap++;
-  int h = *bitmap++;
+//   int w =*bitmap++;
+//   int h = *bitmap++;
 
-  if ( (arw == 0) || (arh == 0) ) {
-    // no crop window
-    arx = x;
-    ary = y;
-    arw = w;
-    arh = h;
-  }
-  else {
-    if ( (x>(arx+arw)) || ((x+w)<arx) || (y>(ary+arh)) || ((y+h)<ary)   ) {
-      return;
-    }
+//   if ( (arw == 0) || (arh == 0) ) {
+//     // no crop window
+//     arx = x;
+//     ary = y;
+//     arw = w;
+//     arh = h;
+//   }
+//   else {
+//     if ( (x>(arx+arw)) || ((x+w)<arx) || (y>(ary+arh)) || ((y+h)<ary)   ) {
+//       return;
+//     }
 
-    // crop area
-    if ( (x > arx) && (x<(arx+arw)) ) {
-      arw = arw - (x-arx);
-      arx = arx + (x-arx);
-    } else {
-      bmp_offx = arx;
-    }
-    if ( ((x+w) > arx) && ((x+w)<(arx+arw)) ) {
-      arw -= (arx+arw-x-w);
-    }
-    if ( (y > ary) && (y<(ary+arh)) ) {
-      arh = arh - (y-ary);
-      ary = ary + (y-ary);
-    } else {
-      bmp_offy = ary;
-    }
-    if ( ((y+h) > ary) && ((y+h)<(ary+arh)) ) {
-      arh -= (ary+arh-y-h);
-    }
-  }
+//     // crop area
+//     if ( (x > arx) && (x<(arx+arw)) ) {
+//       arw = arw - (x-arx);
+//       arx = arx + (x-arx);
+//     } else {
+//       bmp_offx = arx;
+//     }
+//     if ( ((x+w) > arx) && ((x+w)<(arx+arw)) ) {
+//       arw -= (arx+arw-x-w);
+//     }
+//     if ( (y > ary) && (y<(ary+arh)) ) {
+//       arh = arh - (y-ary);
+//       ary = ary + (y-ary);
+//     } else {
+//       bmp_offy = ary;
+//     }
+//     if ( ((y+h) > ary) && ((y+h)<(ary+arh)) ) {
+//       arh -= (ary+arh-y-h);
+//     }
+//   }
 
-  //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
-  digitalWrite(_cs, 0);
-  setArea(arx, ary, arx+arw-1, ary+arh-1);
+//   //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
+//   digitalWrite(_cs, 0);
+//   setArea(arx, ary, arx+arw-1, ary+arh-1);
 
-  bitmap = bitmap + bmp_offy*w + bmp_offx;
-  for (int row=0; row < arh; row++)
-  {
-    bmp_ptr = (uint16_t*)bitmap;
-    for (int col=0;col<arw; col++)
-    {
-        uint16_t color = *bmp_ptr++;
-        SPItransfer16(color);
-    }
-    bitmap +=  w;
-  }
-#ifdef ILI9341
-  digitalWrite(_dc, 0);
-  SPItransfer(ILI9341_SLPOUT);
-  digitalWrite(_dc, 1);
-#endif
-  setArea(0, 0, TFT_REALWIDTH-1, TFT_REALHEIGHT-1);
-  digitalWrite(_cs, 1);
-  //SPI.endTransaction();
-}
+//   bitmap = bitmap + bmp_offy*w + bmp_offx;
+//   for (int row=0; row < arh; row++)
+//   {
+//     bmp_ptr = (uint16_t*)bitmap;
+//     for (int col=0;col<arw; col++)
+//     {
+//         uint16_t color = *bmp_ptr++;
+//         SPItransfer16(color);
+//     }
+//     bitmap +=  w;
+//   }
+// #ifdef ILI9341
+//   digitalWrite(_dc, 0);
+//   SPItransfer(ILI9341_SLPOUT);
+//   digitalWrite(_dc, 1);
+// #endif
+//   setArea(0, 0, TFT_REALWIDTH-1, TFT_REALHEIGHT-1);
+//   digitalWrite(_cs, 1);
+//   //SPI.endTransaction();
+// }
 
-void TFT_T_DMA::drawTextNoDma(int16_t x, int16_t y, const char * text, uint16_t fgcolor, uint16_t bgcolor, bool doublesize) {
-  uint16_t c;
-  while ((c = *text++)) {
-    const uint8_t* charpt=&font8x8[c][0];
+// void TFT_T_DMA::drawTextNoDma(int16_t x, int16_t y, const char * text, uint16_t fgcolor, uint16_t bgcolor, bool doublesize) {
+//   uint16_t c;
+//   while ((c = *text++)) {
+//     const uint8_t* charpt=&font8x8[c][0];
 
-    //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
-    digitalWrite(_cs, 0);
-    setArea(x,y,x+7,y+(doublesize?15:7));
-    for (int i=0;i<8;i++)
-    {
-      unsigned char bits;
-      if (doublesize) {
-        bits = *charpt;
-        //digitalWrite(_dc, 1);
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-        bits = bits >> 1;
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-        bits = bits >> 1;
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-        bits = bits >> 1;
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-        bits = bits >> 1;
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-        bits = bits >> 1;
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-        bits = bits >> 1;
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-        bits = bits >> 1;
-        if (bits&0x01) SPItransfer16(fgcolor);
-        else SPItransfer16(bgcolor);
-      }
-      bits = *charpt++;
-      //digitalWrite(_dc, 1);
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-      bits = bits >> 1;
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-      bits = bits >> 1;
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-      bits = bits >> 1;
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-      bits = bits >> 1;
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-      bits = bits >> 1;
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-      bits = bits >> 1;
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-      bits = bits >> 1;
-      if (bits&0x01) SPItransfer16(fgcolor);
-      else SPItransfer16(bgcolor);
-    }
-    x +=8;
-#ifdef ILI9341
-    digitalWrite(_dc, 0);
-    SPItransfer(ILI9341_SLPOUT);
-    digitalWrite(_dc, 1);
-#endif
-    digitalWrite(_cs, 1);
-    //SPI.endTransaction();
-  }
+//     //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
+//     digitalWrite(_cs, 0);
+//     setArea(x,y,x+7,y+(doublesize?15:7));
+//     for (int i=0;i<8;i++)
+//     {
+//       unsigned char bits;
+//       if (doublesize) {
+//         bits = *charpt;
+//         //digitalWrite(_dc, 1);
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//         bits = bits >> 1;
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//         bits = bits >> 1;
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//         bits = bits >> 1;
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//         bits = bits >> 1;
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//         bits = bits >> 1;
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//         bits = bits >> 1;
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//         bits = bits >> 1;
+//         if (bits&0x01) SPItransfer16(fgcolor);
+//         else SPItransfer16(bgcolor);
+//       }
+//       bits = *charpt++;
+//       //digitalWrite(_dc, 1);
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//       bits = bits >> 1;
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//       bits = bits >> 1;
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//       bits = bits >> 1;
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//       bits = bits >> 1;
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//       bits = bits >> 1;
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//       bits = bits >> 1;
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//       bits = bits >> 1;
+//       if (bits&0x01) SPItransfer16(fgcolor);
+//       else SPItransfer16(bgcolor);
+//     }
+//     x +=8;
+// #ifdef ILI9341
+//     digitalWrite(_dc, 0);
+//     SPItransfer(ILI9341_SLPOUT);
+//     digitalWrite(_dc, 1);
+// #endif
+//     digitalWrite(_cs, 1);
+//     //SPI.endTransaction();
+//   }
 
-  //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
-  digitalWrite(_cs, 0);
-  setArea(0, 0, (TFT_REALWIDTH-1), (TFT_REALHEIGHT-1));
-  digitalWrite(_cs, 1);
-  //SPI.endTransaction();
-}
+//   //SPI.beginTransaction(SPISettings(SPICLOCK, MSBFIRST, SPI_MODE));
+//   digitalWrite(_cs, 0);
+//   setArea(0, 0, (TFT_REALWIDTH-1), (TFT_REALHEIGHT-1));
+//   digitalWrite(_cs, 1);
+//   //SPI.endTransaction();
+// }
 
 
 /***********************************************************************************************
@@ -953,120 +953,120 @@ void TFT_T_DMA::drawSprite(int16_t x, int16_t y, const uint16_t *bitmap, uint16_
 /*******************************************************************
  Experimental PWM interrupt based sound driver !!!
 *******************************************************************/
-#include "hardware/irq.h"
-#include "hardware/pwm.h"
+// #include "hardware/irq.h"
+// #include "hardware/pwm.h"
 
-static bool fillfirsthalf = true;
-static uint16_t cnt = 0;
-static uint16_t sampleBufferSize = 0;
+//static bool fillfirsthalf = true;
+//static uint16_t cnt = 0;
+//static uint16_t sampleBufferSize = 0;
 
-static void (*fillsamples)(short * stream, int len) = nullptr;
+//static void (*fillsamples)(short * stream, int len) = nullptr;
 
-static uint32_t * i2s_tx_buffer;
-static short * i2s_tx_buffer16;
-
-
-
-static void SOFTWARE_isr() {
-  if (fillfirsthalf) {
-    fillsamples((short *)i2s_tx_buffer, sampleBufferSize);
-  }
-  else {
-    fillsamples((short *)&i2s_tx_buffer[sampleBufferSize/2], sampleBufferSize);
-  }
-}
-
-static void AUDIO_isr() {
-  pwm_clear_irq(pwm_gpio_to_slice_num(AUDIO_PIN));
-  long s = i2s_tx_buffer16[cnt++];
-  s += i2s_tx_buffer16[cnt++];
-  s = s/2 + 32767;
-  cnt += 2;
-  pwm_set_gpio_level(AUDIO_PIN, s >> 8);
-  cnt = cnt & (sampleBufferSize*2-1);
-
-  if (cnt == 0) {
-    fillfirsthalf = false;
-    //irq_set_pending(RTC_IRQ+1);
-    multicore_fifo_push_blocking(0);
-  }
-  else if (cnt == sampleBufferSize) {
-    fillfirsthalf = true;
-    //irq_set_pending(RTC_IRQ+1);
-    multicore_fifo_push_blocking(0);
-  }
-}
-
-static void core1_sio_irq() {
-  irq_clear(SIO_IRQ_PROC1);
-  while(multicore_fifo_rvalid()) {
-    /*uint16_t raw =*/ multicore_fifo_pop_blocking();
-    SOFTWARE_isr();
-  }
-  multicore_fifo_clear_irq();
-}
-
-static void core1_func() {
-    multicore_fifo_clear_irq();
-    irq_set_exclusive_handler(SIO_IRQ_PROC1,core1_sio_irq);
-    //irq_set_priority (SIO_IRQ_PROC1, 129);
-    irq_set_enabled(SIO_IRQ_PROC1,true);
-
-    while (true) {
-        tight_loop_contents();
-    }
-}
-
-void TFT_T_DMA::begin_audio(int samplesize, void (*callback)(short * stream, int len))
-{
-  fillsamples = callback;
-  i2s_tx_buffer =  (uint32_t*)malloc(samplesize*sizeof(uint32_t));
-
-  if (i2s_tx_buffer == NULL) {
-    printf("sound buffer could not be allocated!!!!!\n");
-    return;
-  }
-  memset((void*)i2s_tx_buffer,0, samplesize*sizeof(uint32_t));
-  printf("sound buffer allocated\n");
-
-  i2s_tx_buffer16 = (short*)i2s_tx_buffer;
-
-  sampleBufferSize = samplesize;
-
-  gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
+// static uint32_t * i2s_tx_buffer;
+// static short * i2s_tx_buffer16;
 
 
-  multicore_launch_core1(core1_func);
+
+// static void SOFTWARE_isr() {
+//   if (fillfirsthalf) {
+//     fillsamples((short *)i2s_tx_buffer, sampleBufferSize);
+//   }
+//   else {
+//     fillsamples((short *)&i2s_tx_buffer[sampleBufferSize/2], sampleBufferSize);
+//   }
+// }
+
+// static void AUDIO_isr() {
+//   pwm_clear_irq(pwm_gpio_to_slice_num(AUDIO_PIN));
+//   long s = i2s_tx_buffer16[cnt++];
+//   s += i2s_tx_buffer16[cnt++];
+//   s = s/2 + 32767;
+//   cnt += 2;
+//   pwm_set_gpio_level(AUDIO_PIN, s >> 8);
+//   cnt = cnt & (sampleBufferSize*2-1);
+
+//   if (cnt == 0) {
+//     fillfirsthalf = false;
+//     //irq_set_pending(RTC_IRQ+1);
+//     multicore_fifo_push_blocking(0);
+//   }
+//   else if (cnt == sampleBufferSize) {
+//     fillfirsthalf = true;
+//     //irq_set_pending(RTC_IRQ+1);
+//     multicore_fifo_push_blocking(0);
+//   }
+// }
+
+// static void core1_sio_irq() {
+//   irq_clear(SIO_IRQ_PROC1);
+//   while(multicore_fifo_rvalid()) {
+//     /*uint16_t raw =*/ multicore_fifo_pop_blocking();
+//     SOFTWARE_isr();
+//   }
+//   multicore_fifo_clear_irq();
+// }
+
+// static void core1_func() {
+//     multicore_fifo_clear_irq();
+//     irq_set_exclusive_handler(SIO_IRQ_PROC1,core1_sio_irq);
+//     //irq_set_priority (SIO_IRQ_PROC1, 129);
+//     irq_set_enabled(SIO_IRQ_PROC1,true);
+
+//     while (true) {
+//         tight_loop_contents();
+//     }
+// }
+
+// void TFT_T_DMA::begin_audio(int samplesize, void (*callback)(short * stream, int len))
+// {
+//   fillsamples = callback;
+//   i2s_tx_buffer =  (uint32_t*)malloc(samplesize*sizeof(uint32_t));
+
+//   if (i2s_tx_buffer == NULL) {
+//     printf("sound buffer could not be allocated!!!!!\n");
+//     return;
+//   }
+//   memset((void*)i2s_tx_buffer,0, samplesize*sizeof(uint32_t));
+//   printf("sound buffer allocated\n");
+
+//   i2s_tx_buffer16 = (short*)i2s_tx_buffer;
+
+//   sampleBufferSize = samplesize;
+
+//   gpio_set_function(AUDIO_PIN, GPIO_FUNC_PWM);
 
 
-  int audio_pin_slice = pwm_gpio_to_slice_num(AUDIO_PIN);
-  // Setup PWM interrupt to fire when PWM cycle is complete
-  pwm_clear_irq(audio_pin_slice);
-  pwm_set_irq_enabled(audio_pin_slice, true);
-  irq_set_exclusive_handler(PWM_IRQ_WRAP, AUDIO_isr);
-  irq_set_priority (PWM_IRQ_WRAP, 128);
-  irq_set_enabled(PWM_IRQ_WRAP, true);
-
-  //irq_set_exclusive_handler(RTC_IRQ+1,SOFTWARE_isr);
-  //irq_set_priority (RTC_IRQ+1, 120);
-  //irq_set_enabled(RTC_IRQ+1,true);
+//   multicore_launch_core1(core1_func);
 
 
-  // Setup PWM for audio output
-  pwm_config config = pwm_get_default_config();
-//  pwm_config_set_clkdiv(&config, 5.5f);
-  pwm_config_set_clkdiv(&config, 50.0f);
-  pwm_config_set_wrap(&config, 254);
-  pwm_init(audio_pin_slice, &config, true);
+//   int audio_pin_slice = pwm_gpio_to_slice_num(AUDIO_PIN);
+//   // Setup PWM interrupt to fire when PWM cycle is complete
+//   pwm_clear_irq(audio_pin_slice);
+//   pwm_set_irq_enabled(audio_pin_slice, true);
+//   irq_set_exclusive_handler(PWM_IRQ_WRAP, AUDIO_isr);
+//   irq_set_priority (PWM_IRQ_WRAP, 128);
+//   irq_set_enabled(PWM_IRQ_WRAP, true);
 
-  pwm_set_gpio_level(AUDIO_PIN, 0);
-  printf("sound initialized\n");
-}
+//   //irq_set_exclusive_handler(RTC_IRQ+1,SOFTWARE_isr);
+//   //irq_set_priority (RTC_IRQ+1, 120);
+//   //irq_set_enabled(RTC_IRQ+1,true);
 
-void TFT_T_DMA::end_audio()
-{
-  if (i2s_tx_buffer != NULL) {
-    free(i2s_tx_buffer);
-  }
-}
+
+//   // Setup PWM for audio output
+//   pwm_config config = pwm_get_default_config();
+// //  pwm_config_set_clkdiv(&config, 5.5f);
+//   pwm_config_set_clkdiv(&config, 50.0f);
+//   pwm_config_set_wrap(&config, 254);
+//   pwm_init(audio_pin_slice, &config, true);
+
+//   pwm_set_gpio_level(AUDIO_PIN, 0);
+//   printf("sound initialized\n");
+// }
+
+// void TFT_T_DMA::end_audio()
+// {
+//   if (i2s_tx_buffer != NULL) {
+//     free(i2s_tx_buffer);
+//   }
+// }
 

@@ -56,7 +56,7 @@ int main()
   emu::display::init(ram_start, PALETTE);
 
   repeating_timer timer;
-  add_repeating_timer_ms(25, repeating_timer_callback, NULL, &timer);
+  add_repeating_timer_ms(25, repeating_timer_callback, nullptr, &timer);
 
   for (;;)
   {

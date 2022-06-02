@@ -177,13 +177,13 @@ byte* save_image_sna()
   data[16] = spec::myCPU.IY.B.h;
   data[17] = spec::myCPU.IX.B.l;
   data[18] = spec::myCPU.IX.B.h;
-  data[19] = 0; // TODO
+  data[19] = spec::myCPU.IFF == 0x09 ? 0x04 : 0; //(spec::myCPU.IFF & 0x??);
   data[20] = spec::myCPU.R; //R.W
   data[21] = spec::myCPU.AF.B.l;
   data[22] = spec::myCPU.AF.B.h;
   data[23] = spec::myCPU.SP.B.l;
   data[24] = spec::myCPU.SP.B.h;
-  data[25] = 0; // TODO
+  data[25] = spec::myCPU.IFF >> 1; //0; // TODO
   // = regs->IFF = 0;
   // = regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
   // = regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_2 : 0);
@@ -194,7 +194,7 @@ byte* save_image_sna()
   // load RAM from SNA
   for (uint16_t i = 0; i < 0xc000; ++i)
   {
-    data[27 + i] = 170; //RdZ80(i + 0x4000);
+    data[27 + i] = RdZ80(i + 0x4000);
   }
   // SP to PC for SNA run
   // regs->PC.B.l = RdZ80(regs->SP.W);

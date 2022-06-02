@@ -22,9 +22,10 @@ void emu::keyboard::readUsbSerial(byte* kbd_ram)
   }
   if (c == 1)
   {
-    byte* image = save_image_sna();
-    for (uint16_t i = 0; i < SNA_LEN; ++i)
-      printf("%c", image[i]);
-    free(image);
+    spec::dump_sna = true;
+  }
+  if (c == 2)
+  {
+    spec::init();
   }
 }
