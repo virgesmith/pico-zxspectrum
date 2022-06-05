@@ -100,7 +100,11 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
 
 }
 
+loader::Snapshot loader::snapshot_type = loader::Snapshot::NONE;
 byte loader::snapshot_buffer[Z80_LEN];
+bool loader::snapshot_pending = false;
+bool loader::reset_pending = false;
+
 
 void loader::load_image_sna(Z80 *regs)
 {
@@ -144,7 +148,7 @@ void loader::load_image_sna(Z80 *regs)
   emu::display::bordercolor = data[26] & 0x07;
 
   // load RAM from SNA
-  for (int i = 0; i != 0xbfff; ++i)
+  for (int i = 0; i < 0xc000; ++i)
   {
     WrZ80(i + 0x4000, data[27 + i]);
   }
@@ -153,6 +157,8 @@ void loader::load_image_sna(Z80 *regs)
   regs->SP.W++;
   regs->PC.B.h = RdZ80(regs->SP.W);
   regs->SP.W++;
+
+  loader::snapshot_type = loader::Snapshot::SNA;
 }
 
 // byte* loader::save_image_sna()
@@ -314,7 +320,6 @@ void loader::load_image_z80(Z80 *R)
 
   cur_addr=0x4000; // RAM start
 
-
   if(flag_version==0) {
     //-----------------------
     // old Version
@@ -380,10 +385,11 @@ void loader::load_image_z80(Z80 *R)
       next_block=p_decompFlashBlock(akt_block);
     }
   }
+  loader::snapshot_type = loader::Snapshot::Z80;
 }
 
 
-byte* loader::save_image_z80(const Z80 *R)
+void loader::save_image_z80(const Z80 *R)
 {
   //----------------------------------
   // construct header
@@ -458,7 +464,7 @@ byte* loader::save_image_z80(const Z80 *R)
   for (uint16_t i = 0; i < 0xc000; ++i)
     data[i + 30] = RdZ80(i + 0x4000);
 
-  return data;
+  loader::snapshot_type = loader::Snapshot::Z80;
 }
 
 

@@ -32,8 +32,7 @@ emu::display::RGB PALETTE[16] = {
 
 bool repeating_timer_callback(struct repeating_timer* t)
 {
-  uint16_t bClick = 0;
-  spec::input(bClick);
+  spec::input();
   emu::display::toggle_vbl();
   return true;
 }

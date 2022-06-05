@@ -27,6 +27,7 @@ set(PICOSPECCY_SOURCES
 		src/display.cpp
 		src/keyboard.cpp
 		src/loader.cpp
+		src/serial.cpp
 		src/picospeccy.cpp
 		src/AudioPlaySystem.cpp
 	)
