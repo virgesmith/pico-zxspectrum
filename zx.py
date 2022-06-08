@@ -137,15 +137,15 @@ def load(zxspectrum: Serial, filename: str | None) -> None:
 
 def get_snapshot(zxspectrum: Serial) -> None:
   zxspectrum.write((1).to_bytes(1, 'little'))
-  filename = f'zx{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}.sna'
+  filename = f'zx{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}.z80'
   with open(filename, "wb") as fh:
     hex = zxspectrum.readline().rstrip().decode("utf-8")
-    sna = bytes.fromhex(hex)
-    if (len(sna) != 49179):
-      print(f"error received {len(sna)} bytes, expected 49179")
+    z80 = bytes.fromhex(hex)
+    if (len(z80) != 49182):
+      print(f"error received {len(z80)} bytes, expected 49182")
     else:
-      print(f"wrote {len(sna)} bytes to {filename}")
-      fh.write(sna)
+      print(f"wrote {len(z80)} bytes to {filename}")
+      fh.write(z80)
 
 
 def reset(zxspectrum: Serial) -> None:

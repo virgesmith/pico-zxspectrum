@@ -111,14 +111,14 @@ void step()
 
   if (dump_sna)
   {
-    byte* image = save_image_sna();
+    byte* image = save_image_z80(&spec::myCPU, ZX_RAM);
     if (!image)
     {
       printf("no mem!\n");
     }
     else
     {
-      for (uint16_t i = 0; i < SNA_LEN; ++i)
+      for (uint16_t i = 0; i < Z80_LEN; ++i)
       {
         printf("%02x", image[i]);
       }

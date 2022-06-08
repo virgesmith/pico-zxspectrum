@@ -9,6 +9,8 @@
 #include "loader.h"
 #include "display.h"
 
+#include <cstring>
+
 //-------------------------------------------------------------
 extern uint8_t out_ram;
 
@@ -157,6 +159,12 @@ byte* save_image_sna()
   if (!data)
     return nullptr;
 
+  // // PC to SP for SNA run?
+  // WrZ80(spec::myCPU.SP.W, spec::myCPU.PC.B.l);
+  // spec::myCPU.SP.W++;
+  // WrZ80(spec::myCPU.SP.W, spec::myCPU.PC.B.h);
+  // spec::myCPU.SP.W++;
+
   // Save Z80 registers into SNA
   data[ 0] = spec::myCPU.I      ;
   data[ 1] = spec::myCPU.HL1.B.l;
@@ -177,30 +185,20 @@ byte* save_image_sna()
   data[16] = spec::myCPU.IY.B.h;
   data[17] = spec::myCPU.IX.B.l;
   data[18] = spec::myCPU.IX.B.h;
-  data[19] = spec::myCPU.IFF == 0x09 ? 0x04 : 0; //(spec::myCPU.IFF & 0x??);
+  data[19] = (spec::myCPU.IFF & IFF_EI) ? 0x4 : 0;
   data[20] = spec::myCPU.R; //R.W
   data[21] = spec::myCPU.AF.B.l;
   data[22] = spec::myCPU.AF.B.h;
   data[23] = spec::myCPU.SP.B.l;
   data[24] = spec::myCPU.SP.B.h;
-  data[25] = spec::myCPU.IFF >> 1; //0; // TODO
-  // = regs->IFF = 0;
-  // = regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
-  // = regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_2 : 0);
-  // = regs->IFF |= (data[25]<< 1); // regs->IM = data[25];
-
+  data[25] = (spec::myCPU.IFF & 0b110) >> 1;
   data[26] = emu::display::bordercolor;
 
-  // load RAM from SNA
+  // save RAM to SNA
   for (uint16_t i = 0; i < 0xc000; ++i)
   {
     data[27 + i] = RdZ80(i + 0x4000);
   }
-  // SP to PC for SNA run
-  // regs->PC.B.l = RdZ80(regs->SP.W);
-  // regs->SP.W++;
-  // regs->PC.B.h = RdZ80(regs->SP.W);
-  // regs->SP.W++;
   return data;
 }
 
@@ -387,6 +385,84 @@ void load_image_z80(Z80 *R, const uint8_t *data, uint16_t length)
       next_block=p_decompFlashBlock(akt_block);
     }
   }
+}
+
+
+byte* save_image_z80(const Z80 *R, const uint8_t *ram)
+{
+  //----------------------------------
+  // construct header
+  // Byte : [0...29]
+  //----------------------------------
+  byte* data = (byte*)malloc(30 + 0xc000);
+
+  data[0] = R->AF.B.h; // A [0]
+  data[1] = R->AF.B.l; // F [1]
+  data[2] = R->BC.B.l; // C [2]
+  data[3] = R->BC.B.h; // B [3]
+  data[4] = R->HL.B.l; // L [4]
+  data[5] = R->HL.B.h; // H [5]
+
+  data[6] = R->PC.B.l; // PC
+  data[7] = R->PC.B.h; //
+  data[8] = R->SP.B.l; // SP
+  data[9] = R->SP.B.h; //
+
+  // // SP [8+9]
+  // value1=*(ptr++);
+  // value2=*(ptr++);
+  // R->SP.W=(value2<<8)|value1;
+
+  data[10] = R->I; // I [10]
+  data[11] = R->R & 0x7f; // R [11]
+
+  // Comressed-Flag & Border [12]
+  //data[12] = ((R->R & 0x80) >> 7) & (emu::display::bordercolor << 1);
+  data[12] = ((R->R & 0x80) >> 7) & (InZ80(0xFE) << 1);
+
+  // value1=*(ptr++);
+  // value2=((value1&0x0E)>>1);
+  // OutZ80(0xFE, value2); // BorderColor
+  // if((value1&0x20)!=0) {
+  //   flag_compressed=1;
+  // } else {
+  //   flag_compressed=0;
+  // }
+
+  data[13] = R->DE.B.l; // E [13]
+  data[14] = R->DE.B.h; // D [14]
+  data[15] = R->BC1.B.l; // C1 [15]
+  data[16] = R->BC1.B.h; // B1 [16]
+  data[17] = R->DE1.B.l; // E1 [17]
+  data[18] = R->DE1.B.h; // D1 [18]
+  data[19] = R->HL1.B.l; // L1 [19]
+  data[20] = R->HL1.B.h; // H1 [20]
+  data[21] = R->AF1.B.h; // A1 [21]
+  data[22] = R->AF1.B.l; // F1 [22]
+  data[23] = R->IY.B.l; // Y [23]
+  data[24] = R->IY.B.h; // I [24]
+  data[25] = R->IX.B.l; // X [25]
+  data[26] = R->IX.B.h; // I [26]
+
+  // Interrupt-Flag [27]
+  data[27] = (R->IFF | (IFF_2|IFF_EI)) ? 1 : 0;
+
+  data[28] = (R->IFF & IFF_IM2); // "IFF2 (not particularly important...)"
+
+  // Interrupt-Mode
+  data[29] = ((R->IFF & IFF_IM1) ? 0x01 : 0) | ((R->IFF & IFF_IM2) ? 0x02 : 0);
+
+  // // restliche Register
+  // R->ICount   = R->IPeriod;
+  // R->IRequest = INT_NONE;
+  // R->IBackup  = 0;
+
+  //-----------------------
+  // old Version 1 raw (uncompressed),
+  //-----------------------
+  memcpy(data + 30, ram, 0xc000);
+
+  return data;
 }
 
 
