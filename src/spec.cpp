@@ -66,23 +66,18 @@ void start()
   if (mode != 0)
   {
     uint16_t len = (uint16_t)getchar() + (((uint16_t)getchar()) << 8);
-    byte* buffer = (byte*)malloc(len);
-    if (buffer)
+    for (uint16_t i = 0; i < len; ++i)
     {
-      for (uint16_t i = 0; i < len; ++i)
-      {
-          buffer[i] = getchar();
-      }
-      switch(mode)
-      {
-        case Z80_IMG:
-          load_image_z80(&spec::myCPU, buffer, len);
-          break;
-        case SNA_IMG:
-          load_image_sna(&spec::myCPU, buffer, len);
-          break;
-      }
-      free(buffer);
+      loader::snapshot_buffer[i] = getchar();
+    }
+    switch(mode)
+    {
+      case Z80_IMG:
+        loader::load_image_z80(&spec::myCPU);
+        break;
+      case SNA_IMG:
+        loader::load_image_sna(&spec::myCPU);
+        break;
     }
   }
   emu::sound::init();
@@ -111,39 +106,30 @@ void step()
 
   if (dump_sna)
   {
-    byte* image = save_image_z80(&spec::myCPU, ZX_RAM);
-    if (!image)
+    for (uint16_t i = 0; i < loader::Z80_LEN; ++i)
     {
-      printf("no mem!\n");
+      printf("%02x", loader::snapshot_buffer[i]);
     }
-    else
-    {
-      for (uint16_t i = 0; i < Z80_LEN; ++i)
-      {
-        printf("%02x", image[i]);
-      }
-      printf("\n");
-    }
-    free(image);
+    printf("\n");
     dump_sna = false;
   }
 
   IntZ80(&myCPU,INT_IRQ); // must be called every 20ms
   emu::display::render();
 
-  int k = 0; // ik; //emu_GetPad();
+  // int k = 0; // ik; //emu_GetPad();
 
-  kempston_ram = 0x00;
-  if (k & MASK_JOY2_BTN)
-    kempston_ram |= 0x10; //Fire
-  if (k & MASK_JOY2_UP)
-    kempston_ram |= 0x8; //Up
-  if (k & MASK_JOY2_DOWN)
-    kempston_ram |= 0x4; //Down
-  if (k & MASK_JOY2_RIGHT)
-    kempston_ram |= 0x2; //Right
-  if (k & MASK_JOY2_LEFT)
-    kempston_ram |= 0x1; //Left
+  // kempston_ram = 0x00;
+  // if (k & MASK_JOY2_BTN)
+  //   kempston_ram |= 0x10; //Fire
+  // if (k & MASK_JOY2_UP)
+  //   kempston_ram |= 0x8; //Up
+  // if (k & MASK_JOY2_DOWN)
+  //   kempston_ram |= 0x4; //Down
+  // if (k & MASK_JOY2_RIGHT)
+  //   kempston_ram |= 0x2; //Right
+  // if (k & MASK_JOY2_LEFT)
+  //   kempston_ram |= 0x1; //Left
 }
 
 void input(int bClick)

@@ -100,9 +100,11 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
 
 }
 
+byte loader::snapshot_buffer[Z80_LEN];
 
-void load_image_sna(Z80 *regs, const byte* data, uint16_t len)
+void loader::load_image_sna(Z80 *regs)
 {
+  const byte* data = snapshot_buffer;
   // Load Z80 registers from SNA
   regs->I       = data[ 0];
   regs->HL1.B.l = data[ 1];
@@ -153,54 +155,52 @@ void load_image_sna(Z80 *regs, const byte* data, uint16_t len)
   regs->SP.W++;
 }
 
-byte* save_image_sna()
-{
-  byte* data = (byte*)malloc(SNA_LEN);
-  if (!data)
-    return nullptr;
+// byte* loader::save_image_sna()
+// {
+//   byte* data = snapshot_buffer;
 
-  // // PC to SP for SNA run?
-  // WrZ80(spec::myCPU.SP.W, spec::myCPU.PC.B.l);
-  // spec::myCPU.SP.W++;
-  // WrZ80(spec::myCPU.SP.W, spec::myCPU.PC.B.h);
-  // spec::myCPU.SP.W++;
+//   // // PC to SP for SNA run?
+//   // WrZ80(spec::myCPU.SP.W, spec::myCPU.PC.B.l);
+//   // spec::myCPU.SP.W++;
+//   // WrZ80(spec::myCPU.SP.W, spec::myCPU.PC.B.h);
+//   // spec::myCPU.SP.W++;
 
-  // Save Z80 registers into SNA
-  data[ 0] = spec::myCPU.I      ;
-  data[ 1] = spec::myCPU.HL1.B.l;
-  data[ 2] = spec::myCPU.HL1.B.h;
-  data[ 3] = spec::myCPU.DE1.B.l;
-  data[ 4] = spec::myCPU.DE1.B.h;
-  data[ 5] = spec::myCPU.BC1.B.l;
-  data[ 6] = spec::myCPU.BC1.B.h;
-  data[ 7] = spec::myCPU.AF1.B.l;
-  data[ 8] = spec::myCPU.AF1.B.h;
-  data[ 9] = spec::myCPU.HL.B.l ;
-  data[10] = spec::myCPU.HL.B.h ;
-  data[11] = spec::myCPU.DE.B.l;
-  data[12] = spec::myCPU.DE.B.h;
-  data[13] = spec::myCPU.BC.B.l;
-  data[14] = spec::myCPU.BC.B.h;
-  data[15] = spec::myCPU.IY.B.l;
-  data[16] = spec::myCPU.IY.B.h;
-  data[17] = spec::myCPU.IX.B.l;
-  data[18] = spec::myCPU.IX.B.h;
-  data[19] = (spec::myCPU.IFF & IFF_EI) ? 0x4 : 0;
-  data[20] = spec::myCPU.R; //R.W
-  data[21] = spec::myCPU.AF.B.l;
-  data[22] = spec::myCPU.AF.B.h;
-  data[23] = spec::myCPU.SP.B.l;
-  data[24] = spec::myCPU.SP.B.h;
-  data[25] = (spec::myCPU.IFF & 0b110) >> 1;
-  data[26] = emu::display::bordercolor;
+//   // Save Z80 registers into SNA
+//   data[ 0] = spec::myCPU.I      ;
+//   data[ 1] = spec::myCPU.HL1.B.l;
+//   data[ 2] = spec::myCPU.HL1.B.h;
+//   data[ 3] = spec::myCPU.DE1.B.l;
+//   data[ 4] = spec::myCPU.DE1.B.h;
+//   data[ 5] = spec::myCPU.BC1.B.l;
+//   data[ 6] = spec::myCPU.BC1.B.h;
+//   data[ 7] = spec::myCPU.AF1.B.l;
+//   data[ 8] = spec::myCPU.AF1.B.h;
+//   data[ 9] = spec::myCPU.HL.B.l ;
+//   data[10] = spec::myCPU.HL.B.h ;
+//   data[11] = spec::myCPU.DE.B.l;
+//   data[12] = spec::myCPU.DE.B.h;
+//   data[13] = spec::myCPU.BC.B.l;
+//   data[14] = spec::myCPU.BC.B.h;
+//   data[15] = spec::myCPU.IY.B.l;
+//   data[16] = spec::myCPU.IY.B.h;
+//   data[17] = spec::myCPU.IX.B.l;
+//   data[18] = spec::myCPU.IX.B.h;
+//   data[19] = (spec::myCPU.IFF & IFF_EI) ? 0x4 : 0;
+//   data[20] = spec::myCPU.R; //R.W
+//   data[21] = spec::myCPU.AF.B.l;
+//   data[22] = spec::myCPU.AF.B.h;
+//   data[23] = spec::myCPU.SP.B.l;
+//   data[24] = spec::myCPU.SP.B.h;
+//   data[25] = (spec::myCPU.IFF & 0b110) >> 1;
+//   data[26] = emu::display::bordercolor;
 
-  // save RAM to SNA
-  for (uint16_t i = 0; i < 0xc000; ++i)
-  {
-    data[27 + i] = RdZ80(i + 0x4000);
-  }
-  return data;
-}
+//   // save RAM to SNA
+//   for (uint16_t i = 0; i < 0xc000; ++i)
+//   {
+//     data[27 + i] = RdZ80(i + 0x4000);
+//   }
+//   return snapshot_buffer;
+// }`
 
 //--------------------------------------------------------------
 // Unpack data from a file ( type = * .Z80 ) from flash
@@ -209,26 +209,21 @@ byte* save_image_sna()
 // Data = pointer to the start of data
 // Length = number of bytes
 //--------------------------------------------------------------
-void load_image_z80(Z80 *R, const uint8_t *data, uint16_t length)
+void loader::load_image_z80(Z80 *R)
 {
-  const uint8_t *ptr;
-  const uint8_t *akt_block,*next_block;
+  const uint8_t* data = snapshot_buffer;
+  const uint8_t* ptr = snapshot_buffer;
+  const uint8_t* akt_block,*next_block;
   uint8_t value1,value2;
   uint8_t flag_version=0;
   uint8_t flag_compressed=0;
   uint16_t header_len;
   uint16_t cur_addr;
 
-  if(length==0) return;
-  if(length>0xC020) return;
-
   //----------------------------------
   // parsing header
   // Byte : [0...29]
   //----------------------------------
-
-  // Set pointer to data beginning
-  ptr=data;
 
   R->AF.B.h=*(ptr++); // A [0]
   R->AF.B.l=*(ptr++); // F [1]
@@ -328,7 +323,7 @@ void load_image_z80(Z80 *R, const uint8_t *data, uint16_t length)
       //-----------------------
       // compressed
       //-----------------------
-      while(ptr<(data+length)) {
+      while(ptr<(data+Z80_LEN)) {
         value1=*(ptr++);
         if(value1!=0xED) {
           WrZ80(cur_addr++, value1);
@@ -353,7 +348,7 @@ void load_image_z80(Z80 *R, const uint8_t *data, uint16_t length)
       //-----------------------
       // raw (uncompressed)
       //-----------------------
-      while(ptr<(data+length)) {
+      while(ptr<(data+Z80_LEN)) {
         value1=*(ptr++);
         WrZ80(cur_addr++, value1);
       }
@@ -380,7 +375,7 @@ void load_image_z80(Z80 *R, const uint8_t *data, uint16_t length)
     //------------------------
     // all other parsing
     //------------------------
-    while(next_block<data+length) {
+    while(next_block<data+Z80_LEN) {
       akt_block=next_block;
       next_block=p_decompFlashBlock(akt_block);
     }
@@ -388,13 +383,13 @@ void load_image_z80(Z80 *R, const uint8_t *data, uint16_t length)
 }
 
 
-byte* save_image_z80(const Z80 *R, const uint8_t *ram)
+byte* loader::save_image_z80(const Z80 *R)
 {
   //----------------------------------
   // construct header
   // Byte : [0...29]
   //----------------------------------
-  byte* data = (byte*)malloc(30 + 0xc000);
+  byte* data = snapshot_buffer;
 
   data[0] = R->AF.B.h; // A [0]
   data[1] = R->AF.B.l; // F [1]
@@ -460,7 +455,8 @@ byte* save_image_z80(const Z80 *R, const uint8_t *ram)
   //-----------------------
   // old Version 1 raw (uncompressed),
   //-----------------------
-  memcpy(data + 30, ram, 0xc000);
+  for (uint16_t i = 0; i < 0xc000; ++i)
+    data[i + 30] = RdZ80(i + 0x4000);
 
   return data;
 }

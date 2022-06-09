@@ -22,6 +22,7 @@ void emu::keyboard::readUsbSerial(byte* kbd_ram)
   }
   if (c == 1)
   {
+    loader::save_image_z80(&spec::myCPU);
     spec::dump_sna = true;
   }
   if (c == 2)
