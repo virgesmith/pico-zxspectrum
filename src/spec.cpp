@@ -34,19 +34,19 @@ int lastBuzzCycle=0;
 struct HWOptions
 {
   int port_ff;      // 0xff = emulate the port,  0x00 alwais 0xFF
-  int ts_lebo;      // left border t states
-  int ts_grap;      // graphic zone t states
-  int ts_ribo;      // right border t states
-  int ts_hore;      // horizontal retrace t states
-  int ts_line;      // to speed the calc, the sum of 4 abobe
-  int line_poin;    // lines in retraze post interrup
-  int line_upbo;    // lines of upper border
-  int line_grap;    // lines of graphic zone = 192
-  int line_bobo;    // lines of bottom border
-  int line_retr;    // lines of the retrace
+  // int ts_lebo;      // left border t states
+  // int ts_grap;      // graphic zone t states
+  // int ts_ribo;      // right border t states
+  // int ts_hore;      // horizontal retrace t states
+  // int ts_line;      // to speed the calc, the sum of 4 abobe
+  // int line_poin;    // lines in retraze post interrup
+  // int line_upbo;    // lines of upper border
+  // int line_grap;    // lines of graphic zone = 192
+  // int line_bobo;    // lines of bottom border
+  // int line_retr;    // lines of the retrace
 };
 
-HWOptions hwopt = { 0xFF, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
+HWOptions hwopt = { 0xFF }; //, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 
 }
 
@@ -92,7 +92,6 @@ void step()
 
   if (loader::reset_pending)
   {
-    //ResetZ80(&spec::z80, CYCLES_PER_FRAME);
     loader::load_image_z80(&spec::z80);
     loader::reset_pending = false;
   }

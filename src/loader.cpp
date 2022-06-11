@@ -108,49 +108,47 @@ bool loader::reset_pending = false;
 
 void loader::load_image_sna(Z80 *regs)
 {
-  const byte* data = snapshot_buffer;
   // Load Z80 registers from SNA
-  regs->I       = data[ 0];
-  regs->HL1.B.l = data[ 1];
-  regs->HL1.B.h = data[ 2];
-  regs->DE1.B.l = data[ 3];
-  regs->DE1.B.h = data[ 4];
-  regs->BC1.B.l = data[ 5];
-  regs->BC1.B.h = data[ 6];
-  regs->AF1.B.l = data[ 7];
-  regs->AF1.B.h = data[ 8];
-  regs->HL.B.l  = data[ 9];
-  regs->HL.B.h  = data[10];
-  regs->DE.B.l  = data[11];
-  regs->DE.B.h  = data[12];
-  regs->BC.B.l  = data[13];
-  regs->BC.B.h  = data[14];
-  regs->IY.B.l  = data[15];
-  regs->IY.B.h  = data[16];
-  regs->IX.B.l  = data[17];
-  regs->IX.B.h  = data[18];
- //#define IFF_1       0x01       /* IFF1 flip-flop             */
+  regs->I       = snapshot_buffer[ 0];
+  regs->HL1.B.l = snapshot_buffer[ 1];
+  regs->HL1.B.h = snapshot_buffer[ 2];
+  regs->DE1.B.l = snapshot_buffer[ 3];
+  regs->DE1.B.h = snapshot_buffer[ 4];
+  regs->BC1.B.l = snapshot_buffer[ 5];
+  regs->BC1.B.h = snapshot_buffer[ 6];
+  regs->AF1.B.l = snapshot_buffer[ 7];
+  regs->AF1.B.h = snapshot_buffer[ 8];
+  regs->HL.B.l  = snapshot_buffer[ 9];
+  regs->HL.B.h  = snapshot_buffer[10];
+  regs->DE.B.l  = snapshot_buffer[11];
+  regs->DE.B.h  = snapshot_buffer[12];
+  regs->BC.B.l  = snapshot_buffer[13];
+  regs->BC.B.h  = snapshot_buffer[14];
+  regs->IY.B.l  = snapshot_buffer[15];
+  regs->IY.B.h  = snapshot_buffer[16];
+  regs->IX.B.l  = snapshot_buffer[17];
+  regs->IX.B.h  = snapshot_buffer[18];
+//#define IFF_1       0x01       /* IFF1 flip-flop             */
 //#define IFF_IM1     0x02       /* 1: IM1 mode                */
 //#define IFF_IM2     0x04       /* 1: IM2 mode                */
 //#define IFF_2       0x08       /* IFF2 flip-flop             */
 //#define IFF_EI      0x20       /* 1: EI pending              */
 //#define IFF_HALT    0x80       /* 1: CPU HALTed              */
-  regs->R = data[20]; //R.W
-  regs->AF.B.l = data[21];
-  regs->AF.B.h = data[22];
-  regs->SP.B.l =data[23];
-  regs->SP.B.h =data[24];
+  regs->R = snapshot_buffer[20]; //R.W
+  regs->AF.B.l = snapshot_buffer[21];
+  regs->AF.B.h = snapshot_buffer[22];
+  regs->SP.B.l =snapshot_buffer[23];
+  regs->SP.B.h =snapshot_buffer[24];
   regs->IFF = 0;
-  regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
-  regs->IFF |= (((data[19] & 0x04) >> 2) ? IFF_2 : 0);
-  regs->IFF |= (data[25]<< 1); // regs->IM = data[25];
-  //regs->BorderColor = data[26];
-  emu::display::bordercolor = data[26] & 0x07;
+  regs->IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
+  regs->IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_2 : 0);
+  regs->IFF |= (snapshot_buffer[25]<< 1); // regs->IM = snapshot_buffer[25];
+  emu::display::bordercolor = snapshot_buffer[26] & 0x07;
 
   // load RAM from SNA
   for (int i = 0; i < 0xc000; ++i)
   {
-    WrZ80(i + 0x4000, data[27 + i]);
+    WrZ80(i + 0x4000, snapshot_buffer[27 + i]);
   }
   // SP to PC for SNA run
   regs->PC.B.l = RdZ80(regs->SP.W);
@@ -217,7 +215,6 @@ void loader::load_image_sna(Z80 *regs)
 //--------------------------------------------------------------
 void loader::load_image_z80(Z80 *R)
 {
-  const uint8_t* data = snapshot_buffer;
   const uint8_t* ptr = snapshot_buffer;
   const uint8_t* akt_block,*next_block;
   uint8_t value1,value2;
@@ -328,7 +325,7 @@ void loader::load_image_z80(Z80 *R)
       //-----------------------
       // compressed
       //-----------------------
-      while(ptr<(data+Z80_LEN)) {
+      while(ptr < (snapshot_buffer + Z80_LEN)) {
         value1=*(ptr++);
         if(value1!=0xED) {
           WrZ80(cur_addr++, value1);
@@ -353,7 +350,7 @@ void loader::load_image_z80(Z80 *R)
       //-----------------------
       // raw (uncompressed)
       //-----------------------
-      while(ptr<(data+Z80_LEN)) {
+      while(ptr<(snapshot_buffer+Z80_LEN)) {
         value1=*(ptr++);
         WrZ80(cur_addr++, value1);
       }
@@ -380,7 +377,7 @@ void loader::load_image_z80(Z80 *R)
     //------------------------
     // all other parsing
     //------------------------
-    while(next_block<data+Z80_LEN) {
+    while(next_block<snapshot_buffer+Z80_LEN) {
       akt_block=next_block;
       next_block=p_decompFlashBlock(akt_block);
     }
@@ -391,78 +388,52 @@ void loader::load_image_z80(Z80 *R)
 
 void loader::save_image_z80(const Z80 *R)
 {
-  //----------------------------------
-  // construct header
-  // Byte : [0...29]
-  //----------------------------------
-  byte* data = snapshot_buffer;
+  snapshot_buffer[0] = R->AF.B.h; // A [0]
+  snapshot_buffer[1] = R->AF.B.l; // F [1]
+  snapshot_buffer[2] = R->BC.B.l; // C [2]
+  snapshot_buffer[3] = R->BC.B.h; // B [3]
+  snapshot_buffer[4] = R->HL.B.l; // L [4]
+  snapshot_buffer[5] = R->HL.B.h; // H [5]
 
-  data[0] = R->AF.B.h; // A [0]
-  data[1] = R->AF.B.l; // F [1]
-  data[2] = R->BC.B.l; // C [2]
-  data[3] = R->BC.B.h; // B [3]
-  data[4] = R->HL.B.l; // L [4]
-  data[5] = R->HL.B.h; // H [5]
+  snapshot_buffer[6] = R->PC.B.l; // PC
+  snapshot_buffer[7] = R->PC.B.h; //
+  snapshot_buffer[8] = R->SP.B.l; // SP
+  snapshot_buffer[9] = R->SP.B.h; //
 
-  data[6] = R->PC.B.l; // PC
-  data[7] = R->PC.B.h; //
-  data[8] = R->SP.B.l; // SP
-  data[9] = R->SP.B.h; //
-
-  // // SP [8+9]
-  // value1=*(ptr++);
-  // value2=*(ptr++);
-  // R->SP.W=(value2<<8)|value1;
-
-  data[10] = R->I; // I [10]
-  data[11] = R->R & 0x7f; // R [11]
+  snapshot_buffer[10] = R->I; // I [10]
+  snapshot_buffer[11] = R->R & 0x7f; // R [11]
 
   // Comressed-Flag & Border [12]
-  //data[12] = ((R->R & 0x80) >> 7) & (emu::display::bordercolor << 1);
-  data[12] = ((R->R & 0x80) >> 7) & (InZ80(0xFE) << 1);
+  snapshot_buffer[12] = ((R->R & 0x80) >> 7) | (emu::display::bordercolor << 1);
 
-  // value1=*(ptr++);
-  // value2=((value1&0x0E)>>1);
-  // OutZ80(0xFE, value2); // BorderColor
-  // if((value1&0x20)!=0) {
-  //   flag_compressed=1;
-  // } else {
-  //   flag_compressed=0;
-  // }
-
-  data[13] = R->DE.B.l; // E [13]
-  data[14] = R->DE.B.h; // D [14]
-  data[15] = R->BC1.B.l; // C1 [15]
-  data[16] = R->BC1.B.h; // B1 [16]
-  data[17] = R->DE1.B.l; // E1 [17]
-  data[18] = R->DE1.B.h; // D1 [18]
-  data[19] = R->HL1.B.l; // L1 [19]
-  data[20] = R->HL1.B.h; // H1 [20]
-  data[21] = R->AF1.B.h; // A1 [21]
-  data[22] = R->AF1.B.l; // F1 [22]
-  data[23] = R->IY.B.l; // Y [23]
-  data[24] = R->IY.B.h; // I [24]
-  data[25] = R->IX.B.l; // X [25]
-  data[26] = R->IX.B.h; // I [26]
+  snapshot_buffer[13] = R->DE.B.l; // E [13]
+  snapshot_buffer[14] = R->DE.B.h; // D [14]
+  snapshot_buffer[15] = R->BC1.B.l; // C1 [15]
+  snapshot_buffer[16] = R->BC1.B.h; // B1 [16]
+  snapshot_buffer[17] = R->DE1.B.l; // E1 [17]
+  snapshot_buffer[18] = R->DE1.B.h; // D1 [18]
+  snapshot_buffer[19] = R->HL1.B.l; // L1 [19]
+  snapshot_buffer[20] = R->HL1.B.h; // H1 [20]
+  snapshot_buffer[21] = R->AF1.B.h; // A1 [21]
+  snapshot_buffer[22] = R->AF1.B.l; // F1 [22]
+  snapshot_buffer[23] = R->IY.B.l; // Y [23]
+  snapshot_buffer[24] = R->IY.B.h; // I [24]
+  snapshot_buffer[25] = R->IX.B.l; // X [25]
+  snapshot_buffer[26] = R->IX.B.h; // I [26]
 
   // Interrupt-Flag [27]
-  data[27] = (R->IFF | (IFF_2|IFF_EI)) ? 1 : 0;
+  snapshot_buffer[27] = (R->IFF | (IFF_2|IFF_EI)) ? 1 : 0;
 
-  data[28] = (R->IFF & IFF_IM2); // "IFF2 (not particularly important...)"
+  snapshot_buffer[28] = (R->IFF & IFF_IM2); // "IFF2 (not particularly important...)"
 
   // Interrupt-Mode
-  data[29] = ((R->IFF & IFF_IM1) ? 0x01 : 0) | ((R->IFF & IFF_IM2) ? 0x02 : 0);
-
-  // // restliche Register
-  // R->ICount   = R->IPeriod;
-  // R->IRequest = INT_NONE;
-  // R->IBackup  = 0;
+  snapshot_buffer[29] = ((R->IFF & IFF_IM1) ? 0x01 : 0) | ((R->IFF & IFF_IM2) ? 0x02 : 0);
 
   //-----------------------
   // old Version 1 raw (uncompressed),
   //-----------------------
   for (uint16_t i = 0; i < 0xc000; ++i)
-    data[i + 30] = RdZ80(i + 0x4000);
+    snapshot_buffer[i + 30] = RdZ80(i + 0x4000);
 
   loader::snapshot_type = loader::Snapshot::Z80;
 }
