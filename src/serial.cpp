@@ -29,7 +29,15 @@ void serial::read_img(Command mode)
 {
   uint16_t len = (uint16_t)getchar() + (((uint16_t)getchar()) << 8);
 
-  for (uint16_t i = 0; i < len; ++i)
+  // check image isnt too big
+  if (len > loader::Z80_LEN)
+  {
+    return;
+  }
+
+  loader::image_size = len;
+
+  for (uint16_t i = 0; i < loader::image_size; ++i)
   {
     loader::snapshot_buffer[i] = getchar();
   }

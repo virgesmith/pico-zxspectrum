@@ -13,6 +13,7 @@ const uint16_t Z80_LEN = 49182; // v1 48k uncompressed
 extern bool snapshot_pending;
 extern bool reset_pending;
 extern Snapshot snapshot_type;
+extern uint16_t image_size;
 extern byte snapshot_buffer[Z80_LEN];
 
 void load_image_sna(Z80& R);

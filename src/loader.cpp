@@ -101,6 +101,7 @@ const uint8_t* p_decompFlashBlock(const uint8_t *block_adr)
 }
 
 loader::Snapshot loader::snapshot_type = loader::Snapshot::NONE;
+uint16_t loader::image_size = 0;
 byte loader::snapshot_buffer[Z80_LEN];
 bool loader::snapshot_pending = false;
 bool loader::reset_pending = false;
@@ -325,7 +326,7 @@ void loader::load_image_z80(Z80& regs)
       //-----------------------
       // compressed
       //-----------------------
-      while(ptr < (snapshot_buffer + Z80_LEN)) {
+      while(ptr < (snapshot_buffer + loader::image_size)) {
         value1=*(ptr++);
         if(value1!=0xED) {
           WrZ80(cur_addr++, value1);
@@ -350,7 +351,7 @@ void loader::load_image_z80(Z80& regs)
       //-----------------------
       // raw (uncompressed)
       //-----------------------
-      while(ptr<(snapshot_buffer+Z80_LEN)) {
+      while(ptr<(snapshot_buffer + loader::image_size)) {
         value1=*(ptr++);
         WrZ80(cur_addr++, value1);
       }
@@ -377,7 +378,7 @@ void loader::load_image_z80(Z80& regs)
     //------------------------
     // all other parsing
     //------------------------
-    while(next_block<snapshot_buffer+Z80_LEN) {
+    while(next_block<snapshot_buffer + loader::image_size) {
       akt_block=next_block;
       next_block=p_decompFlashBlock(akt_block);
     }
@@ -436,6 +437,7 @@ void loader::save_image_z80(const Z80& regs)
     snapshot_buffer[i + 30] = RdZ80(i + 0x4000);
 
   loader::snapshot_type = loader::Snapshot::Z80;
+  loader::image_size = loader::Z80_LEN;
 }
 
 
