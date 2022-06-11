@@ -15,7 +15,7 @@ void emu::keyboard::readUsbSerial(byte (&kbd_ram)[8])
       break;
     case Command::SAVE:
       {
-        loader::save_image_z80(&spec::z80);
+        loader::save_image_z80(spec::z80);
         loader::snapshot_pending = true;
       }
       break;

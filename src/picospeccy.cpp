@@ -50,9 +50,9 @@ int main()
   //    set_sys_clock_khz(250000, true);
   stdio_init_all();
 
-  byte *ram_start = spec::init();
+  spec::init();
   spec::start();
-  emu::display::init(ram_start, PALETTE);
+  emu::display::init(spec::ram, PALETTE);
 
   repeating_timer timer;
   add_repeating_timer_ms(25, repeating_timer_callback, nullptr, &timer);

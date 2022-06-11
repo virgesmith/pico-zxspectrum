@@ -37,10 +37,10 @@ void serial::read_img(Command mode)
   switch(mode)
   {
     case Command::LOAD_Z80:
-      loader::load_image_z80(&spec::z80);
+      loader::load_image_z80(spec::z80);
       break;
     case Command::LOAD_SNA:
-      loader::load_image_sna(&spec::z80);
+      loader::load_image_sna(spec::z80);
     default:
       break;
   }

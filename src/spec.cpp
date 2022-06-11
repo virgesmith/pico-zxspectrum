@@ -18,13 +18,14 @@
 #define NBLINES (1) //(48+192+56+16) //(32+256+32)
 #define CYCLES_PER_STEP (CYCLES_PER_FRAME/NBLINES)
 
-#define BASERAM 0x4000
 
 Z80 spec::z80;
+byte spec::ram[0xC000]; // 48k RAM
 
 namespace {
 
-byte ZX_RAM[0xC000];                    // 48k RAM
+const uint16_t BASERAM = 0x4000;
+
 byte key_ram[8]={0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Keyboard buffer
 byte out_ram;                            // Output (fe port)
 byte kempston_ram;                       // Kempston-Joystick Buffer
@@ -51,9 +52,8 @@ HWOptions hwopt = { 0xFF }; //, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 }
 
 
-namespace spec {
 
-void start()
+void spec::start()
 {
   Command mode = serial::wait_command();
 
@@ -63,18 +63,17 @@ void start()
   emu::sound::init();
 }
 
-byte* init()
+void spec::init()
 {
-  memset(ZX_RAM, 0, sizeof(ZX_RAM));
-
+  memset(spec::ram, 0, sizeof(spec::ram));
   ResetZ80(&spec::z80, CYCLES_PER_FRAME);
-  return ZX_RAM;
 }
 
 
-void step()
+void spec::step()
 {
-  for (int scanl = 0; scanl < NBLINES; scanl++) {
+  for (int scanl = 0; scanl < NBLINES; scanl++)
+  {
     lastBuzzCycle=0;
     ExecZ80(&z80,CYCLES_PER_STEP); // 3.5MHz ticks for 6 lines @ 30 kHz = 700 cycles
 #ifdef CUSTOM_SND
@@ -92,7 +91,7 @@ void step()
 
   if (loader::reset_pending)
   {
-    loader::load_image_z80(&spec::z80);
+    loader::load_image_z80(spec::z80);
     loader::reset_pending = false;
   }
 
@@ -114,18 +113,15 @@ void step()
   //   kempston_ram |= 0x1; //Left
 }
 
-void input()
+void spec::input()
 {
   emu::keyboard::readUsbSerial(key_ram);
 }
 
-}
-
-
 void WrZ80(word Addr, byte Value)
 {
   if (Addr >= BASERAM)
-    ZX_RAM[Addr-BASERAM]=Value;
+    spec::ram[Addr-BASERAM]=Value;
 }
 
 byte RdZ80(word addr)
@@ -133,7 +129,7 @@ byte RdZ80(word addr)
   if (addr<BASERAM)
     return ZX48_ROM[addr];
   else
-    return ZX_RAM[addr-BASERAM];
+    return spec::ram[addr-BASERAM];
 }
 
 
@@ -141,7 +137,8 @@ void buzz(int val, int currentTstates)
 {
   int pulse_size = currentTstates - lastBuzzCycle;
 #ifdef CUSTOM_SND
-  for (int i = 0; i<pulse_size; i++ ) {
+  for (int i = 0; i<pulse_size; i++ )
+  {
     sam[wrsam] = lastBuzzVal?0:1;
     wrsam += 1;
     wrsam &= SAMSIZE-1;

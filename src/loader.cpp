@@ -106,43 +106,43 @@ bool loader::snapshot_pending = false;
 bool loader::reset_pending = false;
 
 
-void loader::load_image_sna(Z80 *regs)
+void loader::load_image_sna(Z80& regs)
 {
   // Load Z80 registers from SNA
-  regs->I       = snapshot_buffer[ 0];
-  regs->HL1.B.l = snapshot_buffer[ 1];
-  regs->HL1.B.h = snapshot_buffer[ 2];
-  regs->DE1.B.l = snapshot_buffer[ 3];
-  regs->DE1.B.h = snapshot_buffer[ 4];
-  regs->BC1.B.l = snapshot_buffer[ 5];
-  regs->BC1.B.h = snapshot_buffer[ 6];
-  regs->AF1.B.l = snapshot_buffer[ 7];
-  regs->AF1.B.h = snapshot_buffer[ 8];
-  regs->HL.B.l  = snapshot_buffer[ 9];
-  regs->HL.B.h  = snapshot_buffer[10];
-  regs->DE.B.l  = snapshot_buffer[11];
-  regs->DE.B.h  = snapshot_buffer[12];
-  regs->BC.B.l  = snapshot_buffer[13];
-  regs->BC.B.h  = snapshot_buffer[14];
-  regs->IY.B.l  = snapshot_buffer[15];
-  regs->IY.B.h  = snapshot_buffer[16];
-  regs->IX.B.l  = snapshot_buffer[17];
-  regs->IX.B.h  = snapshot_buffer[18];
+  regs.I       = snapshot_buffer[ 0];
+  regs.HL1.B.l = snapshot_buffer[ 1];
+  regs.HL1.B.h = snapshot_buffer[ 2];
+  regs.DE1.B.l = snapshot_buffer[ 3];
+  regs.DE1.B.h = snapshot_buffer[ 4];
+  regs.BC1.B.l = snapshot_buffer[ 5];
+  regs.BC1.B.h = snapshot_buffer[ 6];
+  regs.AF1.B.l = snapshot_buffer[ 7];
+  regs.AF1.B.h = snapshot_buffer[ 8];
+  regs.HL.B.l  = snapshot_buffer[ 9];
+  regs.HL.B.h  = snapshot_buffer[10];
+  regs.DE.B.l  = snapshot_buffer[11];
+  regs.DE.B.h  = snapshot_buffer[12];
+  regs.BC.B.l  = snapshot_buffer[13];
+  regs.BC.B.h  = snapshot_buffer[14];
+  regs.IY.B.l  = snapshot_buffer[15];
+  regs.IY.B.h  = snapshot_buffer[16];
+  regs.IX.B.l  = snapshot_buffer[17];
+  regs.IX.B.h  = snapshot_buffer[18];
 //#define IFF_1       0x01       /* IFF1 flip-flop             */
 //#define IFF_IM1     0x02       /* 1: IM1 mode                */
 //#define IFF_IM2     0x04       /* 1: IM2 mode                */
 //#define IFF_2       0x08       /* IFF2 flip-flop             */
 //#define IFF_EI      0x20       /* 1: EI pending              */
 //#define IFF_HALT    0x80       /* 1: CPU HALTed              */
-  regs->R = snapshot_buffer[20]; //R.W
-  regs->AF.B.l = snapshot_buffer[21];
-  regs->AF.B.h = snapshot_buffer[22];
-  regs->SP.B.l =snapshot_buffer[23];
-  regs->SP.B.h =snapshot_buffer[24];
-  regs->IFF = 0;
-  regs->IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
-  regs->IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_2 : 0);
-  regs->IFF |= (snapshot_buffer[25]<< 1); // regs->IM = snapshot_buffer[25];
+  regs.R = snapshot_buffer[20]; //R.W
+  regs.AF.B.l = snapshot_buffer[21];
+  regs.AF.B.h = snapshot_buffer[22];
+  regs.SP.B.l =snapshot_buffer[23];
+  regs.SP.B.h =snapshot_buffer[24];
+  regs.IFF = 0;
+  regs.IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
+  regs.IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_2 : 0);
+  regs.IFF |= (snapshot_buffer[25]<< 1); // regs->IM = snapshot_buffer[25];
   emu::display::bordercolor = snapshot_buffer[26] & 0x07;
 
   // load RAM from SNA
@@ -151,10 +151,10 @@ void loader::load_image_sna(Z80 *regs)
     WrZ80(i + 0x4000, snapshot_buffer[27 + i]);
   }
   // SP to PC for SNA run
-  regs->PC.B.l = RdZ80(regs->SP.W);
-  regs->SP.W++;
-  regs->PC.B.h = RdZ80(regs->SP.W);
-  regs->SP.W++;
+  regs.PC.B.l = RdZ80(regs.SP.W);
+  regs.SP.W++;
+  regs.PC.B.h = RdZ80(regs.SP.W);
+  regs.SP.W++;
 
   loader::snapshot_type = loader::Snapshot::SNA;
 }
@@ -213,7 +213,7 @@ void loader::load_image_sna(Z80 *regs)
 // Data = pointer to the start of data
 // Length = number of bytes
 //--------------------------------------------------------------
-void loader::load_image_z80(Z80 *R)
+void loader::load_image_z80(Z80& regs)
 {
   const uint8_t* ptr = snapshot_buffer;
   const uint8_t* akt_block,*next_block;
@@ -228,18 +228,18 @@ void loader::load_image_z80(Z80 *R)
   // Byte : [0...29]
   //----------------------------------
 
-  R->AF.B.h=*(ptr++); // A [0]
-  R->AF.B.l=*(ptr++); // F [1]
-  R->BC.B.l=*(ptr++); // C [2]
-  R->BC.B.h=*(ptr++); // B [3]
-  R->HL.B.l=*(ptr++); // L [4]
-  R->HL.B.h=*(ptr++); // H [5]
+  regs.AF.B.h=*(ptr++); // A [0]
+  regs.AF.B.l=*(ptr++); // F [1]
+  regs.BC.B.l=*(ptr++); // C [2]
+  regs.BC.B.h=*(ptr++); // B [3]
+  regs.HL.B.l=*(ptr++); // L [4]
+  regs.HL.B.h=*(ptr++); // H [5]
 
   // PC [6+7]
   value1=*(ptr++);
   value2=*(ptr++);
-  R->PC.W=(value2<<8)|value1;
-  if(R->PC.W==0x0000) {
+  regs.PC.W=(value2<<8)|value1;
+  if(regs.PC.W==0x0000) {
     flag_version=1;
   }
   else {
@@ -249,10 +249,10 @@ void loader::load_image_z80(Z80 *R)
   // SP [8+9]
   value1=*(ptr++);
   value2=*(ptr++);
-  R->SP.W=(value2<<8)|value1;
+  regs.SP.W=(value2<<8)|value1;
 
-  R->I=*(ptr++); // I [10]
-  R->R=*(ptr++); // R [11]
+  regs.I=*(ptr++); // I [10]
+  regs.R=*(ptr++); // R [11]
 
   // Comressed-Flag & Border [12]
   value1=*(ptr++);
@@ -264,51 +264,51 @@ void loader::load_image_z80(Z80 *R)
     flag_compressed=0;
   }
 
-  R->DE.B.l=*(ptr++); // E [13]
-  R->DE.B.h=*(ptr++); // D [14]
-  R->BC1.B.l=*(ptr++); // C1 [15]
-  R->BC1.B.h=*(ptr++); // B1 [16]
-  R->DE1.B.l=*(ptr++); // E1 [17]
-  R->DE1.B.h=*(ptr++); // D1 [18]
-  R->HL1.B.l=*(ptr++); // L1 [19]
-  R->HL1.B.h=*(ptr++); // H1 [20]
-  R->AF1.B.h=*(ptr++); // A1 [21]
-  R->AF1.B.l=*(ptr++); // F1 [22]
-  R->IY.B.l=*(ptr++); // Y [23]
-  R->IY.B.h=*(ptr++); // I [24]
-  R->IX.B.l=*(ptr++); // X [25]
-  R->IX.B.h=*(ptr++); // I [26]
+  regs.DE.B.l=*(ptr++); // E [13]
+  regs.DE.B.h=*(ptr++); // D [14]
+  regs.BC1.B.l=*(ptr++); // C1 [15]
+  regs.BC1.B.h=*(ptr++); // B1 [16]
+  regs.DE1.B.l=*(ptr++); // E1 [17]
+  regs.DE1.B.h=*(ptr++); // D1 [18]
+  regs.HL1.B.l=*(ptr++); // L1 [19]
+  regs.HL1.B.h=*(ptr++); // H1 [20]
+  regs.AF1.B.h=*(ptr++); // A1 [21]
+  regs.AF1.B.l=*(ptr++); // F1 [22]
+  regs.IY.B.l=*(ptr++); // Y [23]
+  regs.IY.B.h=*(ptr++); // I [24]
+  regs.IX.B.l=*(ptr++); // X [25]
+  regs.IX.B.h=*(ptr++); // I [26]
 
   // Interrupt-Flag [27]
   value1=*(ptr++);
   if(value1!=0) {
     // EI
-    R->IFF|=IFF_2|IFF_EI;
+    regs.IFF|=IFF_2|IFF_EI;
   }
   else {
     // DI
-    R->IFF&=~(IFF_1|IFF_2|IFF_EI);
+    regs.IFF&=~(IFF_1|IFF_2|IFF_EI);
   }
   value1=*(ptr++); // nc [28]
   // Interrupt-Mode [29]
   value1=*(ptr++);
   if((value1&0x01)!=0) {
-    R->IFF|=IFF_IM1;
+    regs.IFF|=IFF_IM1;
   }
   else {
-    R->IFF&=~IFF_IM1;
+    regs.IFF&=~IFF_IM1;
   }
   if((value1&0x02)!=0) {
-    R->IFF|=IFF_IM2;
+    regs.IFF|=IFF_IM2;
   }
   else {
-    R->IFF&=~IFF_IM2;
+    regs.IFF&=~IFF_IM2;
   }
 
   // restliche Register
-  R->ICount   = R->IPeriod;
-  R->IRequest = INT_NONE;
-  R->IBackup  = 0;
+  regs.ICount   = regs.IPeriod;
+  regs.IRequest = INT_NONE;
+  regs.IBackup  = 0;
 
   //----------------------------------
   // save the data in RAM
@@ -368,7 +368,7 @@ void loader::load_image_z80(Z80 *R)
     // PC [32+33]
     value1=*(ptr++);
     value2=*(ptr++);
-    R->PC.W=(value2<<8)|value1;
+    regs.PC.W=(value2<<8)|value1;
 
     //------------------------
     // 1st block parsing
@@ -386,48 +386,48 @@ void loader::load_image_z80(Z80 *R)
 }
 
 
-void loader::save_image_z80(const Z80 *R)
+void loader::save_image_z80(const Z80& regs)
 {
-  snapshot_buffer[0] = R->AF.B.h; // A [0]
-  snapshot_buffer[1] = R->AF.B.l; // F [1]
-  snapshot_buffer[2] = R->BC.B.l; // C [2]
-  snapshot_buffer[3] = R->BC.B.h; // B [3]
-  snapshot_buffer[4] = R->HL.B.l; // L [4]
-  snapshot_buffer[5] = R->HL.B.h; // H [5]
+  snapshot_buffer[0] = regs.AF.B.h; // A [0]
+  snapshot_buffer[1] = regs.AF.B.l; // F [1]
+  snapshot_buffer[2] = regs.BC.B.l; // C [2]
+  snapshot_buffer[3] = regs.BC.B.h; // B [3]
+  snapshot_buffer[4] = regs.HL.B.l; // L [4]
+  snapshot_buffer[5] = regs.HL.B.h; // H [5]
 
-  snapshot_buffer[6] = R->PC.B.l; // PC
-  snapshot_buffer[7] = R->PC.B.h; //
-  snapshot_buffer[8] = R->SP.B.l; // SP
-  snapshot_buffer[9] = R->SP.B.h; //
+  snapshot_buffer[6] = regs.PC.B.l; // PC
+  snapshot_buffer[7] = regs.PC.B.h; //
+  snapshot_buffer[8] = regs.SP.B.l; // SP
+  snapshot_buffer[9] = regs.SP.B.h; //
 
-  snapshot_buffer[10] = R->I; // I [10]
-  snapshot_buffer[11] = R->R & 0x7f; // R [11]
+  snapshot_buffer[10] = regs.I; // I [10]
+  snapshot_buffer[11] = regs.R & 0x7f; // R [11]
 
   // Comressed-Flag & Border [12]
-  snapshot_buffer[12] = ((R->R & 0x80) >> 7) | (emu::display::bordercolor << 1);
+  snapshot_buffer[12] = ((regs.R & 0x80) >> 7) | (emu::display::bordercolor << 1);
 
-  snapshot_buffer[13] = R->DE.B.l; // E [13]
-  snapshot_buffer[14] = R->DE.B.h; // D [14]
-  snapshot_buffer[15] = R->BC1.B.l; // C1 [15]
-  snapshot_buffer[16] = R->BC1.B.h; // B1 [16]
-  snapshot_buffer[17] = R->DE1.B.l; // E1 [17]
-  snapshot_buffer[18] = R->DE1.B.h; // D1 [18]
-  snapshot_buffer[19] = R->HL1.B.l; // L1 [19]
-  snapshot_buffer[20] = R->HL1.B.h; // H1 [20]
-  snapshot_buffer[21] = R->AF1.B.h; // A1 [21]
-  snapshot_buffer[22] = R->AF1.B.l; // F1 [22]
-  snapshot_buffer[23] = R->IY.B.l; // Y [23]
-  snapshot_buffer[24] = R->IY.B.h; // I [24]
-  snapshot_buffer[25] = R->IX.B.l; // X [25]
-  snapshot_buffer[26] = R->IX.B.h; // I [26]
+  snapshot_buffer[13] = regs.DE.B.l; // E [13]
+  snapshot_buffer[14] = regs.DE.B.h; // D [14]
+  snapshot_buffer[15] = regs.BC1.B.l; // C1 [15]
+  snapshot_buffer[16] = regs.BC1.B.h; // B1 [16]
+  snapshot_buffer[17] = regs.DE1.B.l; // E1 [17]
+  snapshot_buffer[18] = regs.DE1.B.h; // D1 [18]
+  snapshot_buffer[19] = regs.HL1.B.l; // L1 [19]
+  snapshot_buffer[20] = regs.HL1.B.h; // H1 [20]
+  snapshot_buffer[21] = regs.AF1.B.h; // A1 [21]
+  snapshot_buffer[22] = regs.AF1.B.l; // F1 [22]
+  snapshot_buffer[23] = regs.IY.B.l; // Y [23]
+  snapshot_buffer[24] = regs.IY.B.h; // I [24]
+  snapshot_buffer[25] = regs.IX.B.l; // X [25]
+  snapshot_buffer[26] = regs.IX.B.h; // I [26]
 
   // Interrupt-Flag [27]
-  snapshot_buffer[27] = (R->IFF | (IFF_2|IFF_EI)) ? 1 : 0;
+  snapshot_buffer[27] = (regs.IFF | (IFF_2|IFF_EI)) ? 1 : 0;
 
-  snapshot_buffer[28] = (R->IFF & IFF_IM2); // "IFF2 (not particularly important...)"
+  snapshot_buffer[28] = (regs.IFF & IFF_IM2); // "IFF2 (not particularly important...)"
 
   // Interrupt-Mode
-  snapshot_buffer[29] = ((R->IFF & IFF_IM1) ? 0x01 : 0) | ((R->IFF & IFF_IM2) ? 0x02 : 0);
+  snapshot_buffer[29] = ((regs.IFF & IFF_IM1) ? 0x01 : 0) | ((regs.IFF & IFF_IM2) ? 0x02 : 0);
 
   //-----------------------
   // old Version 1 raw (uncompressed),
