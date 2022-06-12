@@ -11,12 +11,12 @@ typedef uint8_t byte;
 
 namespace spec {
 
-extern Z80 myCPU;
-extern bool dump_sna;
+extern Z80 z80;
+extern byte ram[0xC000];
 
-byte* init();
+void init();
 void step();
 void start();
-void input(int bClick);
+void input();
 
 }

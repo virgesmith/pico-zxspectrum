@@ -10,9 +10,11 @@ const uint16_t MASK_JOY2_BTN   = 0x0010;
 
 typedef uint8_t byte;
 
+enum class Command: byte { KEYSTROKE, SAVE, RESET, LOAD_SNA, LOAD_Z80, NONE=255 };
+
 namespace emu::keyboard {
 
-void readUsbSerial(byte* kbd_ram);
+void readUsbSerial(byte (&kbd_ram)[8]);
 
 }
 

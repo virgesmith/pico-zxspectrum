@@ -1,32 +1,36 @@
 #include "keyboard.h"
 #include "loader.h"
+#include "serial.h"
 
-extern "C"
+
+void emu::keyboard::readUsbSerial(byte (&kbd_ram)[8])
 {
-#include "iopins.h"
-}
-
-#include "pico/stdlib.h"
-
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-
-void emu::keyboard::readUsbSerial(byte* kbd_ram)
-{
-  byte c = getchar_timeout_us(0);
-  if (c == 0)
+  Command c = serial::pop_command();
+  switch (c)
   {
-    for (int i = 0; i < 8; ++i)
-      kbd_ram[i] = getchar_timeout_us(0);
-  }
-  if (c == 1)
-  {
-    loader::save_image_z80(&spec::myCPU);
-    spec::dump_sna = true;
-  }
-  if (c == 2)
-  {
-    spec::init();
+    case Command::KEYSTROKE:
+      {
+        serial::read_keyboard(kbd_ram);
+      }
+      break;
+    case Command::SAVE:
+      {
+        loader::save_image_z80(spec::z80);
+        loader::snapshot_pending = true;
+      }
+      break;
+    case Command::RESET:
+      {
+        loader::reset_pending = true;
+      }
+      break;
+    case Command::LOAD_SNA:
+    case Command::LOAD_Z80:
+      {
+        serial::read_img(c);
+        //loader::reset_pending = true;
+      }
+    default:
+      break;
   }
 }

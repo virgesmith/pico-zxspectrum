@@ -5,6 +5,7 @@
 #include "display.h"
 #include "keyboard.h"
 #include "loader.h"
+#include "serial.h"
 
 #include <pico/stdlib.h>
 
@@ -17,86 +18,64 @@
 #define NBLINES (1) //(48+192+56+16) //(32+256+32)
 #define CYCLES_PER_STEP (CYCLES_PER_FRAME/NBLINES)
 
-#define BASERAM 0x4000
 
-Z80 spec::myCPU;
+Z80 spec::z80;
+byte spec::ram[0xC000]; // 48k RAM
 
 namespace {
 
-byte ZX_RAM[0xC000];                    // 48k RAM
+const uint16_t BASERAM = 0x4000;
+
 byte key_ram[8]={0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; // Keyboard buffer
 byte out_ram;                            // Output (fe port)
 byte kempston_ram;                       // Kempston-Joystick Buffer
 
 int lastBuzzCycle=0;
 
-const byte Z80_IMG = 1;
-const byte SNA_IMG = 2;
-
 struct HWOptions
 {
   int port_ff;      // 0xff = emulate the port,  0x00 alwais 0xFF
-  int ts_lebo;      // left border t states
-  int ts_grap;      // graphic zone t states
-  int ts_ribo;      // right border t states
-  int ts_hore;      // horizontal retrace t states
-  int ts_line;      // to speed the calc, the sum of 4 abobe
-  int line_poin;    // lines in retraze post interrup
-  int line_upbo;    // lines of upper border
-  int line_grap;    // lines of graphic zone = 192
-  int line_bobo;    // lines of bottom border
-  int line_retr;    // lines of the retrace
+  // int ts_lebo;      // left border t states
+  // int ts_grap;      // graphic zone t states
+  // int ts_ribo;      // right border t states
+  // int ts_hore;      // horizontal retrace t states
+  // int ts_line;      // to speed the calc, the sum of 4 abobe
+  // int line_poin;    // lines in retraze post interrup
+  // int line_upbo;    // lines of upper border
+  // int line_grap;    // lines of graphic zone = 192
+  // int line_bobo;    // lines of bottom border
+  // int line_retr;    // lines of the retrace
 };
 
-HWOptions hwopt = { 0xFF, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
+HWOptions hwopt = { 0xFF }; //, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 
 }
 
 
-namespace spec {
 
-bool dump_sna = false;
-
-void start()
+void spec::start()
 {
-  memset(ZX_RAM, 0, 0xC000);
+  Command mode = serial::wait_command();
 
-  uint8_t mode = getchar();
+  if ((mode == Command::LOAD_SNA) | (mode == Command::LOAD_Z80))
+    serial::read_img(mode);
 
-  if (mode != 0)
-  {
-    uint16_t len = (uint16_t)getchar() + (((uint16_t)getchar()) << 8);
-    for (uint16_t i = 0; i < len; ++i)
-    {
-      loader::snapshot_buffer[i] = getchar();
-    }
-    switch(mode)
-    {
-      case Z80_IMG:
-        loader::load_image_z80(&spec::myCPU);
-        break;
-      case SNA_IMG:
-        loader::load_image_sna(&spec::myCPU);
-        break;
-    }
-  }
   emu::sound::init();
 }
 
-byte* init()
+void spec::init()
 {
-  memset(ZX_RAM, 0, sizeof(ZX_RAM));
-
-  ResetZ80(&spec::myCPU, CYCLES_PER_FRAME);
-  return ZX_RAM;
+  memset(spec::ram, 0, sizeof(spec::ram));
+  ResetZ80(&spec::z80, CYCLES_PER_FRAME);
 }
 
 
-void step()
+void spec::step()
 {
-  for (int scanl = 0; scanl < NBLINES; scanl++) {
+  for (int scanl = 0; scanl < NBLINES; scanl++)
+  {
     lastBuzzCycle=0;
-    ExecZ80(&myCPU,CYCLES_PER_STEP); // 3.5MHz ticks for 6 lines @ 30 kHz = 700 cycles
+    ExecZ80(&z80,CYCLES_PER_STEP); // 3.5MHz ticks for 6 lines @ 30 kHz = 700 cycles
 #ifdef CUSTOM_SND
     buzz(lastBuzzVal, CYCLES_PER_STEP);
 #endif
@@ -104,17 +83,19 @@ void step()
     //sleep_us(1);
   }
 
-  if (dump_sna)
+  if (loader::snapshot_pending)
   {
-    for (uint16_t i = 0; i < loader::Z80_LEN; ++i)
-    {
-      printf("%02x", loader::snapshot_buffer[i]);
-    }
-    printf("\n");
-    dump_sna = false;
+    serial::write_z80();
+    loader::snapshot_pending = false;
   }
 
-  IntZ80(&myCPU,INT_IRQ); // must be called every 20ms
+  if (loader::reset_pending)
+  {
+    loader::load_image_z80(spec::z80);
+    loader::reset_pending = false;
+  }
+
+  IntZ80(&z80, INT_IRQ); // must be called every 20ms
   emu::display::render();
 
   // int k = 0; // ik; //emu_GetPad();
@@ -132,18 +113,15 @@ void step()
   //   kempston_ram |= 0x1; //Left
 }
 
-void input(int bClick)
+void spec::input()
 {
   emu::keyboard::readUsbSerial(key_ram);
 }
 
-}
-
-
 void WrZ80(word Addr, byte Value)
 {
   if (Addr >= BASERAM)
-    ZX_RAM[Addr-BASERAM]=Value;
+    spec::ram[Addr-BASERAM]=Value;
 }
 
 byte RdZ80(word addr)
@@ -151,15 +129,16 @@ byte RdZ80(word addr)
   if (addr<BASERAM)
     return ZX48_ROM[addr];
   else
-    return ZX_RAM[addr-BASERAM];
+    return spec::ram[addr-BASERAM];
 }
 
 
 void buzz(int val, int currentTstates)
 {
-  int pulse_size = (currentTstates-lastBuzzCycle);
+  int pulse_size = currentTstates - lastBuzzCycle;
 #ifdef CUSTOM_SND
-  for (int i = 0; i<pulse_size; i++ ) {
+  for (int i = 0; i<pulse_size; i++ )
+  {
     sam[wrsam] = lastBuzzVal?0:1;
     wrsam += 1;
     wrsam &= SAMSIZE-1;
@@ -185,8 +164,8 @@ void OutZ80(word port,byte value)
   // t = myCPU.ICount - t;
 
 
-  //if (!(port & 0x01)) {
-  if ((port & 0xFF) == 0xFE)
+  if (!(port & 0x01))
+  //if ((port & 0xFF) == 0xFE)
   {
     emu::display::bordercolor = (value & 0x07);
     //byte mic = (value & 0x08) ? 1 : 0;
@@ -194,11 +173,11 @@ void OutZ80(word port,byte value)
     // t = (CYCLES_PER_STEP-myCPU.ICount) - t;
     // printf("%c%c%c", (value & 0x1f), (byte)(t>>8), (byte)(t & 0xff));
     // printf("%c%c", (byte)(t >> 8), (byte)(t &0xff));
-    buzz(ear, CYCLES_PER_STEP-spec::myCPU.ICount);
+    buzz(ear, CYCLES_PER_STEP - spec::z80.ICount);
     // TODO check if anything appears over serial....
     // printf("%d %d %d\n", bordercolor, mic, ear);
   }
-  else if((port & 0xFF)==0xFE)
+  else if((port & 0xFF) == 0xFE)
   {
     out_ram=value; // update it
     // TODO check if anything appears over serial....

@@ -112,28 +112,30 @@ keymap = {
 
 }
 
+# enum class Command: byte { KEYSTROKE, SAVE, RESET, LOAD_SNA, LOAD_Z80, NONE=255 };
 
 def get_mode(filename: str | None) -> int:
-  if not filename:
-    return 0
+  # values must correspond with enum in keyboard.h
   if filename.endswith(".z80"):
-    return 1
+    return 4
   elif filename.endswith(".sna"):
-    return 2
-  return 0
+    return 3
+  else:
+    raise ValueError("invalid image format")
 
 
-def load(zxspectrum: Serial, filename: str | None) -> None:
+def upload_image(zxspectrum: Serial, filename: str) -> None:
   mode = get_mode(filename)
   zxspectrum.write(mode.to_bytes(1, 'little'))
 
-  if mode:
-    with open(filename, "rb") as fh:
-      data = fh.read()
-      n = len(data)
-      zxspectrum.write(n.to_bytes(2, 'little'))
-      zxspectrum.write(data)
+  print(mode, filename)
 
+  with open(filename, "rb") as fh:
+    data = fh.read()
+    n = len(data)
+    zxspectrum.write(n.to_bytes(2, 'little'))
+    zxspectrum.write(data)
+  print(n)
 
 def get_snapshot(zxspectrum: Serial) -> None:
   zxspectrum.write((1).to_bytes(1, 'little'))
@@ -172,6 +174,13 @@ def main(filename: str | None) -> None:
       reset(zxspectrum)
       return
 
+    # if key == Key.insert:
+    #   if filename:
+    #     upload_image(zxspectrum, filename)
+    #   else:
+    #     print("no image selected")
+    #   return
+
     codes = keymap.get(key, ())
     if not codes:
       print(f"{key} not mapped")
@@ -195,7 +204,10 @@ def main(filename: str | None) -> None:
     # print(f"{keymap[key]} {kbd_ram.hex()}")
 
 
-  load(zxspectrum, filename)
+  if filename:
+    upload_image(zxspectrum, filename)
+  else:
+    zxspectrum.write((0).to_bytes(1, 'little'))
 
   with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
     while True:
