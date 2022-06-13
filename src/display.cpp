@@ -1,5 +1,8 @@
 #include "display.h"
 
+#include "drivers/rgbled/rgbled.hpp"
+#include "libraries/pico_display_2/pico_display_2.hpp"
+
 #include <cstring>
 
 
@@ -23,6 +26,8 @@ int skip = 0;
 volatile bool vbl = true;
 
 TFT_T_DMA tft;
+
+pimoroni::RGBLED led(pimoroni::PicoDisplay2::LED_R, pimoroni::PicoDisplay2::LED_G, pimoroni::PicoDisplay2::LED_B);
 
 const display::RGB PALETTE[16] = {
   {0, 0, 0},
@@ -158,4 +163,10 @@ void display::render()
 const uint16_t* display::line(uint16_t y)
 {
   return tft.getLineBuffer(y);
+}
+
+
+void display::rgb_led(byte r, byte g, byte b)
+{
+  led.set_rgb(0, 127, 0);
 }

@@ -1,6 +1,7 @@
 #include "spectrum.h"
 #include "display.h"
 #include "keyboard.h"
+#include "buttons.h"
 
 #include "pico.h"
 #include "pico/stdlib.h"
@@ -11,10 +12,19 @@
 
 #include <cstdio>
 
-
 bool repeating_timer_callback(struct repeating_timer* t)
 {
-  spectrum::input();
+  // if (button::pressed(button::Id::A))
+  // {
+  //   display::rgb_led(63, 0, 0);
+  // }
+
+  // if (button::pressed(button::Id::B))
+  // {
+  //   display::rgb_led(0, 0, 63);
+  // }
+
+  spec::input();
   display::toggle_vbl();
   return true;
 }

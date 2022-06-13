@@ -11,13 +11,10 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialize the Pico SDK
 pico_sdk_init()
 
-add_subdirectory(src/FatFs_SPI build)
-# add_subdirectory(pimoroni-pico EXCLUDE_FROM_ALL)
+add_subdirectory(pimoroni-pico EXCLUDE_FROM_ALL)
 
 include_directories(src/config)
 include_directories(src/tft_t)
-# include_directories(src/FatFs_SPI)
-
 
 set(PICOSPECCY_SOURCES
 		src/Z80.c
@@ -26,6 +23,7 @@ set(PICOSPECCY_SOURCES
 		src/sound.cpp
 		src/display.cpp
 		src/keyboard.cpp
+		src/buttons.cpp
 		src/loader.cpp
 		src/serial.cpp
 		src/main.cpp
@@ -46,21 +44,16 @@ include_directories(${CMAKE_SOURCE_DIR}/../pimoroni-pico)
 target_link_libraries(picozxspectrum
 	pico_multicore
 	pico_stdlib
-	FatFs_SPI
-#	    hardware_adc
+#	hardware_adc
+  hardware_dma
+	hardware_spi
 	hardware_pio
 	hardware_pwm
-#	pico_display_2
-#	generic_st7789
+	rgbled
+	button
 )
 
-
-#target_compile_options(picozxspectrum PUBLIC -O3)
 target_compile_options(picozxspectrum PUBLIC -O3 -Wall -Wno-unused-function -Wno-unused-parameter)
-IF (NOT DEFINED N_SD_CARDS)
-    SET(N_SD_CARDS 1)
-ENDIF()
-target_compile_definitions(picozxspectrum PUBLIC N_SD_CARDS=${N_SD_CARDS})
 
 pico_enable_stdio_uart(picozxspectrum 0)
 pico_enable_stdio_usb(picozxspectrum 1)

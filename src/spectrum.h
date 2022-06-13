@@ -1,12 +1,8 @@
 #pragma once
 
-extern "C" {
 #include "Z80.h"
-}
+#include "types.h"
 #include "pico/time.h"
-
-#include <cstdint>
-typedef uint8_t byte;
 
 
 namespace spectrum {

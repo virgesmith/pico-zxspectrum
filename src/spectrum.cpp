@@ -3,6 +3,7 @@
 #include "spectrum_rom.h"
 #include "sound.h"
 #include "display.h"
+#include "buttons.h"
 #include "keyboard.h"
 #include "loader.h"
 #include "serial.h"
@@ -61,6 +62,8 @@ void spectrum::start()
     serial::read_img(mode);
 
   sound::init();
+
+  display::rgb_led(0, 63, 0);
 }
 
 void spectrum::init()
