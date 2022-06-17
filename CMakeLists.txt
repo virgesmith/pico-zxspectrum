@@ -36,7 +36,6 @@ set(TFT_T_SOURCES
 		src/tft_t/tft_t_dma.cpp
 	)
 
-
 add_executable(picozxspectrum
  	${PICOSPECCY_SOURCES}
 	${TFT_T_SOURCES}

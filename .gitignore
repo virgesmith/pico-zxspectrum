@@ -5,3 +5,4 @@ pico_sdk_import.cmake
 *.sna
 *.tzx
 *.z80
+pimoroni-pico
