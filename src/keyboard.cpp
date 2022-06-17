@@ -19,6 +19,11 @@ void emu::keyboard::readUsbSerial(byte (&kbd_ram)[8])
         loader::snapshot_pending = true;
       }
       break;
+    case Command::SCREENSHOT:
+      {
+        loader::screenshot_pending = true;
+      }
+      break;
     case Command::RESET:
       {
         loader::reset_pending = true;

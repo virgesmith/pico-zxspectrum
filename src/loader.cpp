@@ -104,6 +104,7 @@ loader::Snapshot loader::snapshot_type = loader::Snapshot::NONE;
 uint16_t loader::image_size = 0;
 byte loader::snapshot_buffer[Z80_LEN];
 bool loader::snapshot_pending = false;
+bool loader::screenshot_pending = false;
 bool loader::reset_pending = false;
 
 
@@ -144,7 +145,7 @@ void loader::load_image_sna(Z80& regs)
   regs.IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_1 : 0); //regs->IFF1 = regs->IFF2 = ...
   regs.IFF |= (((snapshot_buffer[19] & 0x04) >> 2) ? IFF_2 : 0);
   regs.IFF |= (snapshot_buffer[25]<< 1); // regs->IM = snapshot_buffer[25];
-  emu::display::bordercolor = snapshot_buffer[26] & 0x07;
+  display::bordercolor = snapshot_buffer[26] & 0x07;
 
   // load RAM from SNA
   for (int i = 0; i < 0xc000; ++i)
@@ -197,7 +198,7 @@ void loader::load_image_sna(Z80& regs)
 //   data[23] = spec::myCPU.SP.B.l;
 //   data[24] = spec::myCPU.SP.B.h;
 //   data[25] = (spec::myCPU.IFF & 0b110) >> 1;
-//   data[26] = emu::display::bordercolor;
+//   data[26] = display::bordercolor;
 
 //   // save RAM to SNA
 //   for (uint16_t i = 0; i < 0xc000; ++i)
@@ -405,7 +406,7 @@ void loader::save_image_z80(const Z80& regs)
   snapshot_buffer[11] = regs.R & 0x7f; // R [11]
 
   // Comressed-Flag & Border [12]
-  snapshot_buffer[12] = ((regs.R & 0x80) >> 7) | (emu::display::bordercolor << 1);
+  snapshot_buffer[12] = ((regs.R & 0x80) >> 7) | (display::bordercolor << 1);
 
   snapshot_buffer[13] = regs.DE.B.l; // E [13]
   snapshot_buffer[14] = regs.DE.B.h; // D [14]

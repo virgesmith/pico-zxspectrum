@@ -4,6 +4,8 @@ from serial import Serial
 from pathlib import Path
 from datetime import datetime
 import sys
+import numpy as np
+from PIL import Image
 
 DEVICE = "/dev/ttyACM0"
 BAUD_RATE = 115200
@@ -124,6 +126,26 @@ def get_mode(filename: str | None) -> int:
     raise ValueError("invalid image format")
 
 
+WIDTH = 320
+HEIGHT = 240
+
+def to_rgb(raw: bytes) -> list[tuple]:
+  img = np.empty((HEIGHT, WIDTH, 3), dtype=np.uint8)
+
+  for i in range(0, len(raw), 2):
+    b = (raw[i] & 0x1f) << 3
+    g = ((raw[i] >> 5) | ((raw[i+1] & 0x7) << 3)) << 2
+    r = (raw[i+1] >> 3) << 3
+
+    x = (i // 2) % WIDTH
+    y = (i // 2) // WIDTH
+    img[y, x] = [r, g, b]
+
+  return img
+
+
+
+
 def upload_image(zxspectrum: Serial, filename: str) -> None:
   mode = get_mode(filename)
   zxspectrum.write(mode.to_bytes(1, 'little'))
@@ -137,6 +159,7 @@ def upload_image(zxspectrum: Serial, filename: str) -> None:
     zxspectrum.write(data)
   print(n)
 
+
 def get_snapshot(zxspectrum: Serial) -> None:
   zxspectrum.write((1).to_bytes(1, 'little'))
   filename = f'zx{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}.z80'
@@ -146,8 +169,20 @@ def get_snapshot(zxspectrum: Serial) -> None:
     if (len(z80) != 49182):
       print(f"error received {len(z80)} bytes, expected 49182")
     else:
-      print(f"wrote {len(z80)} bytes to {filename}")
+      print(f"wrote image ({len(z80)} bytes) to {filename}")
       fh.write(z80)
+
+
+def get_screenshot(zxspectrum: Serial) -> None:
+  zxspectrum.write((5).to_bytes(1, 'little'))
+  filename = f'zx{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}.png'
+  with open(filename, "wb") as fh:
+    hex = zxspectrum.readline().rstrip().decode("utf-8")
+    img = to_rgb(bytes.fromhex(hex))
+
+    img = Image.fromarray(img, "RGB")
+    img.save(filename)
+    print(f"wrote image to {filename}")
 
 
 def reset(zxspectrum: Serial) -> None:
@@ -155,7 +190,6 @@ def reset(zxspectrum: Serial) -> None:
 
 
 def main(filename: str | None) -> None:
-
   if not Path(DEVICE).exists:
     raise FileNotFoundError("usb device not found")
   zxspectrum = Serial(DEVICE, BAUD_RATE)
@@ -167,6 +201,10 @@ def main(filename: str | None) -> None:
       exit(0)
 
     if key == Key.print_screen:
+      get_screenshot(zxspectrum)
+      return
+
+    if key == Key.insert:
       get_snapshot(zxspectrum)
       return
 
