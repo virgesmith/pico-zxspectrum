@@ -11,6 +11,7 @@ const uint16_t SNA_LEN = 49179;
 const uint16_t Z80_LEN = 49182; // v1 48k uncompressed
 
 extern bool snapshot_pending;
+extern bool screenshot_pending;
 extern bool reset_pending;
 extern Snapshot snapshot_type;
 extern uint16_t image_size;

@@ -1,5 +1,6 @@
 #include "serial.h"
 #include "loader.h"
+#include "display.h"
 
 #include "pico/stdlib.h"
 
@@ -63,3 +64,19 @@ void serial::write_z80()
   }
   printf("\n");
 }
+
+
+void serial::write_screen()
+{
+
+  for (uint16_t y = 0; y < display::HEIGHT; ++y)
+  {
+    const uint16_t* line = display::line(y);
+    for (uint16_t x = 0; x < display::WIDTH; ++x)
+    {
+      printf("%02x%02x", line[x] & 0xff, line[x] >> 8);
+    }
+  }
+  printf("\n");
+}
+

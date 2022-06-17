@@ -89,6 +89,12 @@ void spec::step()
     loader::snapshot_pending = false;
   }
 
+  if (loader::screenshot_pending)
+  {
+    serial::write_screen();
+    loader::screenshot_pending = false;
+  }
+
   if (loader::reset_pending)
   {
     loader::load_image_z80(spec::z80);
@@ -96,7 +102,7 @@ void spec::step()
   }
 
   IntZ80(&z80, INT_IRQ); // must be called every 20ms
-  emu::display::render();
+  display::render();
 
   // int k = 0; // ik; //emu_GetPad();
 
@@ -167,7 +173,7 @@ void OutZ80(word port,byte value)
   if (!(port & 0x01))
   //if ((port & 0xFF) == 0xFE)
   {
-    emu::display::bordercolor = (value & 0x07);
+    display::bordercolor = (value & 0x07);
     //byte mic = (value & 0x08) ? 1 : 0;
     byte ear = (value & 0x10) ? 1 : 0;
     // t = (CYCLES_PER_STEP-myCPU.ICount) - t;

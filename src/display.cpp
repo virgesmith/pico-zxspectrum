@@ -24,6 +24,25 @@ volatile bool vbl = true;
 
 TFT_T_DMA tft;
 
+const display::RGB PALETTE[16] = {
+  {0, 0, 0},
+  {0, 0, 205},
+  {205, 0, 0},
+  {205, 0, 205},
+  {0, 205, 0},
+  {0, 205, 205},
+  {205, 205, 0},
+  {212, 212, 212},
+  {0, 0, 0},
+  {0, 0, 255},
+  {255, 0, 0},
+  {255, 0, 255},
+  {0, 255, 0},
+  {0, 255, 255},
+  {255, 255, 0},
+  {255, 255, 255}
+};
+
 // map zx spectrum colour codes to 5+6+5 bit RGB
 uint16_t palette16[PALETTE_SIZE];
 
@@ -52,12 +71,12 @@ void displayScanline(int y, int f_flash)
 
   if (y < VBORDER || y >= SCREEN_HEIGHT - VBORDER)
   {
-    memset(scanline_buffer, emu::display::bordercolor, SCREEN_WIDTH);
+    memset(scanline_buffer, display::bordercolor, SCREEN_WIDTH);
     drawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
     return;
   }
 
-  memset(scanline_buffer, emu::display::bordercolor, HBORDER);
+  memset(scanline_buffer, display::bordercolor, HBORDER);
   col += HBORDER;
 
   int row = y - VBORDER;
@@ -90,22 +109,22 @@ void displayScanline(int y, int f_flash)
     scanline_buffer[col++] = ((pixel & 0x01) ? ink : paper);
   }
 
-  memset(scanline_buffer + col, emu::display::bordercolor, HBORDER);
+  memset(scanline_buffer + col, display::bordercolor, HBORDER);
 
   drawLine(scanline_buffer, SCREEN_WIDTH, SCREEN_HEIGHT, y);
 }
 
 }
 
-byte emu::display::bordercolor;
+byte display::bordercolor;
 
 
-void emu::display::init(byte* const pram, const RGB (&palette)[16])
+void display::init(byte* const pram)
 {
   VRAM = pram;
 
   for (size_t i = 0; i < 16; ++i)
-    palette16[i] = RGBVAL16(palette[i].R, palette[i].G, palette[i].B);
+    palette16[i] = RGBVAL16(PALETTE[i].R, PALETTE[i].G, PALETTE[i].B);
 
   tft.begin();
   tft.fillScreenNoDma(RGBVAL16(0x00, 0x00, 0x00));
@@ -113,13 +132,14 @@ void emu::display::init(byte* const pram, const RGB (&palette)[16])
 }
 
 
-void emu::display::toggle_vbl()
+void display::toggle_vbl()
 {
   vbl = !vbl;
 }
 
 
-void emu::display::render() {
+void display::render()
+{
   int y;
   static int f_flash = 1, f_flash2 = 0;
   f_flash2 = (f_flash2 + 1) % 32;
@@ -132,4 +152,10 @@ void emu::display::render() {
     displayScanline(y, f_flash);
 
   drawVsync();
+}
+
+
+const uint16_t* display::line(uint16_t y)
+{
+  return tft.getLineBuffer(y);
 }

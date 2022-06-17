@@ -17,4 +17,6 @@ void read_img(Command c);
 
 void write_z80();
 
+void write_screen();
+
 }

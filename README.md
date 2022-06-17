@@ -2,12 +2,12 @@
 
 It's been 40 years... I still remember the computery smell when I unboxed mine at Xmas (I *think* 1983)
 
-So for old times' sake here's a ZX Spectrum emulator for Raspberry Pi pico, using:
+So for old times' sake here's a ZX Spectrum emulator for the [Raspberry Pi pico](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html), using:
 
-- screen: a 5cm 320x240 TFT display as screen.
-- keyboard: USB serial connection, which also supports image loading and saving
+- screen: a [5cm 320x240 TFT display](https://shop.pimoroni.com/products/pico-display-pack-2-0?variant=39374122582099) as screen.
+- keyboard: USB serial connection
 - sound: not sure yet...
-- cassette recorder: perhaps to transmit tapes over USB serial, possibly at the original speed...
+- cassette recorder: life's too short...
 
 ## Status
 
@@ -17,16 +17,20 @@ So for old times' sake here's a ZX Spectrum emulator for Raspberry Pi pico, usin
 - [ ] real-time(?) tape loading
 - [X] image loading over USB serial: Z80 and SNA formats supported
 - [X] image saving over USB serial: Z80 format
+- [X] save screenshot over USB serial: png format
 
 ![boot](./doc/boot.jpg)
-![code](./doc/code.jpg)
-![game](./doc/game.jpg)
+
+![basic](./doc/basic.png) ![jetpac](./doc/jetpac.png)
+![chegg](./doc/chegg.png) ![manic](./doc/manic.png)
+
 
 ## Build
 
-Requires [pico-sdk](https://github.com/raspberrypi/pico-sdk) (and its dependencies e.g. tinyUSB...). In the repo root:
+Requires [pico-sdk](https://github.com/raspberrypi/pico-sdk) (and its dependencies e.g. tinyUSB...), plus the [pimoroni-pico](https://github.com/pimoroni/pimoroni-pico) libraries. In the repo root:
 
 ```sh
+ln -s ../pimoroni-pico # adjust to wherever you cloned it to
 mkdir -p build && cd build
 export PICO_SDK_PATH=../../pico-sdk # adjust as necessary
 cmake ..
@@ -52,11 +56,13 @@ python zx.py [image]
 Keys map closely to the ZX Spectrum keyboard (below), with shift=caps shift, left ctrl=symbol shift. Shift-left-ctrl enters extended mode.
 Unmapped keys such as backspace and the arrow keys emulate shift-0,5,6,7,8
 
-PrtScr triggers an image save (Z80 format)
+`PrtScr` triggers an image save (Z80 format)
 
-Del resets the device to the last image saved (if created), the image at startup (if supplied), or ZX basic.
+`Ins` triggers an image save (Z80 format)
 
-Esc followed by ctrl-C exits the listener.
+`Del` resets the device to the last image saved (if created), the image at startup (if supplied), or ZX basic.
+
+`Esc` followed by ctrl-C exits the keyboard listener.
 
 ![spectrum-48-keyboard](./doc/spectrum-48-keyboard.png)
 
