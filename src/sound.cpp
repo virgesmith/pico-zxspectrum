@@ -13,7 +13,7 @@ extern "C"
 
 AudioPlaySystem mymixer;
 
-void emu::sound::init()
+void sound::init()
 {
   // uses core1
   // tft.begin_audio(256, mymixer.snd_Mixer);
@@ -22,7 +22,7 @@ void emu::sound::init()
   // gpio_set_dir(AUDIO_PIN, GPIO_OUT);
 }
 
-void emu::sound::playSound(int chan, int volume, int freq)
+void sound::playSound(int chan, int volume, int freq)
 {
   if (chan < 6)
   {
@@ -30,7 +30,7 @@ void emu::sound::playSound(int chan, int volume, int freq)
   }
 }
 
-void emu::sound::playBuzz(int size, int val)
+void sound::playBuzz(int size, int val)
 {
 #ifndef CUSTOM_SND
   // gpio_put(AUDIO_PIN, (val?1:0));

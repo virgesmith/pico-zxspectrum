@@ -3,7 +3,7 @@
 #include "serial.h"
 
 
-void emu::keyboard::readUsbSerial(byte (&kbd_ram)[8])
+void keyboard::readUsbSerial(byte (&kbd_ram)[8])
 {
   Command c = serial::pop_command();
   switch (c)
@@ -15,7 +15,7 @@ void emu::keyboard::readUsbSerial(byte (&kbd_ram)[8])
       break;
     case Command::SAVE:
       {
-        loader::save_image_z80(spec::z80);
+        loader::save_image_z80(spectrum::z80);
         loader::snapshot_pending = true;
       }
       break;

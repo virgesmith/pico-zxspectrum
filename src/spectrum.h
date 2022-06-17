@@ -9,7 +9,7 @@ extern "C" {
 typedef uint8_t byte;
 
 
-namespace spec {
+namespace spectrum {
 
 extern Z80 z80;
 extern byte ram[0xC000];

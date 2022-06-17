@@ -1,4 +1,4 @@
-#include "spec.h"
+#include "spectrum.h"
 #include "display.h"
 #include "keyboard.h"
 
@@ -14,7 +14,7 @@
 
 bool repeating_timer_callback(struct repeating_timer* t)
 {
-  spec::input();
+  spectrum::input();
   display::toggle_vbl();
   return true;
 }
@@ -32,15 +32,15 @@ int main()
   //    set_sys_clock_khz(250000, true);
   stdio_init_all();
 
-  spec::init();
-  spec::start();
-  display::init(spec::ram);
+  spectrum::init();
+  spectrum::start();
+  display::init(spectrum::ram);
 
   repeating_timer timer;
   add_repeating_timer_ms(25, repeating_timer_callback, nullptr, &timer);
 
   for (;;)
   {
-    spec::step();
+    spectrum::step();
   }
 }

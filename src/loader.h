@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spec.h"
+#include "spectrum.h"
 
 namespace loader
 {

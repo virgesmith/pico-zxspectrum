@@ -1,4 +1,4 @@
-#include "spec.h"
+#include "spectrum.h"
 
 #include "spectrum_rom.h"
 #include "sound.h"
@@ -19,8 +19,8 @@
 #define CYCLES_PER_STEP (CYCLES_PER_FRAME/NBLINES)
 
 
-Z80 spec::z80;
-byte spec::ram[0xC000]; // 48k RAM
+Z80 spectrum::z80;
+byte spectrum::ram[0xC000]; // 48k RAM
 
 namespace {
 
@@ -53,24 +53,24 @@ HWOptions hwopt = { 0xFF }; //, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 
 
 
-void spec::start()
+void spectrum::start()
 {
   Command mode = serial::wait_command();
 
   if ((mode == Command::LOAD_SNA) | (mode == Command::LOAD_Z80))
     serial::read_img(mode);
 
-  emu::sound::init();
+  sound::init();
 }
 
-void spec::init()
+void spectrum::init()
 {
-  memset(spec::ram, 0, sizeof(spec::ram));
-  ResetZ80(&spec::z80, CYCLES_PER_FRAME);
+  memset(spectrum::ram, 0, sizeof(spectrum::ram));
+  ResetZ80(&spectrum::z80, CYCLES_PER_FRAME);
 }
 
 
-void spec::step()
+void spectrum::step()
 {
   for (int scanl = 0; scanl < NBLINES; scanl++)
   {
@@ -97,7 +97,7 @@ void spec::step()
 
   if (loader::reset_pending)
   {
-    loader::load_image_z80(spec::z80);
+    loader::load_image_z80(spectrum::z80);
     loader::reset_pending = false;
   }
 
@@ -119,15 +119,15 @@ void spec::step()
   //   kempston_ram |= 0x1; //Left
 }
 
-void spec::input()
+void spectrum::input()
 {
-  emu::keyboard::readUsbSerial(key_ram);
+  keyboard::readUsbSerial(key_ram);
 }
 
 void WrZ80(word Addr, byte Value)
 {
   if (Addr >= BASERAM)
-    spec::ram[Addr-BASERAM]=Value;
+    spectrum::ram[Addr-BASERAM]=Value;
 }
 
 byte RdZ80(word addr)
@@ -135,7 +135,7 @@ byte RdZ80(word addr)
   if (addr<BASERAM)
     return ZX48_ROM[addr];
   else
-    return spec::ram[addr-BASERAM];
+    return spectrum::ram[addr-BASERAM];
 }
 
 
@@ -153,7 +153,7 @@ void buzz(int val, int currentTstates)
   lastBuzzCycle = currentTstates;
   lastBuzzVal = val;
 #else
-  emu::sound::playBuzz(pulse_size,val);
+  sound::playBuzz(pulse_size,val);
 #endif
 }
 
@@ -179,7 +179,7 @@ void OutZ80(word port,byte value)
     // t = (CYCLES_PER_STEP-myCPU.ICount) - t;
     // printf("%c%c%c", (value & 0x1f), (byte)(t>>8), (byte)(t & 0xff));
     // printf("%c%c", (byte)(t >> 8), (byte)(t &0xff));
-    buzz(ear, CYCLES_PER_STEP - spec::z80.ICount);
+    buzz(ear, CYCLES_PER_STEP - spectrum::z80.ICount);
     // TODO check if anything appears over serial....
     // printf("%d %d %d\n", bordercolor, mic, ear);
   }

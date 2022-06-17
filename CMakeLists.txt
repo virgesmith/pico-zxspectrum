@@ -21,14 +21,14 @@ include_directories(src/tft_t)
 
 set(PICOSPECCY_SOURCES
 		src/Z80.c
-		src/spec.cpp
+		src/spectrum.cpp
 		src/spectrum_rom.cpp
 		src/sound.cpp
 		src/display.cpp
 		src/keyboard.cpp
 		src/loader.cpp
 		src/serial.cpp
-		src/picospeccy.cpp
+		src/main.cpp
 		src/AudioPlaySystem.cpp
 	)
 

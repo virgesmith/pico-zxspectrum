@@ -1,6 +1,6 @@
 #pragma once
 
-namespace emu::sound {
+namespace sound {
 
 void init();
 void playSound(int chan, int volume, int freq);

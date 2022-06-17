@@ -12,7 +12,7 @@ typedef uint8_t byte;
 
 enum class Command: byte { KEYSTROKE, SAVE, RESET, LOAD_SNA, LOAD_Z80, SCREENSHOT, NONE=255 };
 
-namespace emu::keyboard {
+namespace keyboard {
 
 void readUsbSerial(byte (&kbd_ram)[8]);
 
