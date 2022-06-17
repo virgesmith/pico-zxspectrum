@@ -24,7 +24,7 @@ bool repeating_timer_callback(struct repeating_timer* t)
   //   display::rgb_led(0, 0, 63);
   // }
 
-  spec::input();
+  spectrum::input();
   display::toggle_vbl();
   return true;
 }
@@ -44,7 +44,7 @@ int main()
 
   spectrum::init();
   spectrum::start();
-  display::init(spectrum::ram);
+  display::init();
 
   repeating_timer timer;
   add_repeating_timer_ms(25, repeating_timer_callback, nullptr, &timer);

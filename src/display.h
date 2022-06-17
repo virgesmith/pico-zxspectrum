@@ -13,7 +13,7 @@ struct RGB { byte R,G,B; };
 
 extern byte bordercolor;
 
-void init(byte* VRAM); // ==Z80RAM
+void init();
 void toggle_vbl();
 void render();
 const uint16_t* line(uint16_t y);
