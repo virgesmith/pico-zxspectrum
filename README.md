@@ -53,16 +53,15 @@ Interaction requires a (rudimentary) keyboard driver written in python and depen
 python zx.py [image]
 ```
 
-Keys map closely to the ZX Spectrum keyboard (below), with shift=caps shift, left ctrl=symbol shift. Shift-left-ctrl enters extended mode.
-Unmapped keys such as backspace and the arrow keys emulate shift-0,5,6,7,8
+Keys map closely to the ZX Spectrum keyboard (below), with `LShift`as caps shift, `RCtrl` is symbol shift. `LShift+RCtrl` enters extended mode. Various unmapped keys also work, such as `Backspace` and the arrow keys which emulate caps-shifted 0,5,6,7,8 respectively.
 
-`PrtScr` triggers an image save (Z80 format)
+`PrtScr` triggers an screenshot save (png format)
 
-`Ins` triggers an image save (Z80 format)
+`Ins` triggers an image (registers and RAM) save (Z80 format)
 
 `Del` resets the device to the last image saved (if created), the image at startup (if supplied), or ZX basic.
 
-`Esc` followed by ctrl-C exits the keyboard listener.
+`Esc` followed by `Ctrl+C` exits the keyboard listener.
 
 ![spectrum-48-keyboard](./doc/spectrum-48-keyboard.png)
 
