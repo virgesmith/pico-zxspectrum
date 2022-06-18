@@ -53,9 +53,11 @@ HWOptions hwopt = { 0xFF }; //, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 }
 
 
-
-void spectrum::start()
+void spectrum::init()
 {
+  memset(spectrum::ram, 0, sizeof(spectrum::ram));
+  ResetZ80(&spectrum::z80, CYCLES_PER_FRAME);
+
   Command mode = serial::wait_command();
 
   if ((mode == Command::LOAD_SNA) | (mode == Command::LOAD_Z80))
@@ -63,13 +65,7 @@ void spectrum::start()
 
   sound::init();
 
-  display::rgb_led(0, 63, 0);
-}
-
-void spectrum::init()
-{
-  memset(spectrum::ram, 0, sizeof(spectrum::ram));
-  ResetZ80(&spectrum::z80, CYCLES_PER_FRAME);
+  display::rgb_led(0, 128, 0);
 }
 
 

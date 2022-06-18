@@ -28,8 +28,8 @@ volatile bool vbl = true;
 
 TFT_T_DMA tft;
 
-pimoroni::RGBLED led(pimoroni::PicoDisplay2::LED_R, pimoroni::PicoDisplay2::LED_G, pimoroni::PicoDisplay2::LED_B,
-                     pimoroni::Polarity::ACTIVE_LOW, 0);
+pimoroni::RGBLED led(pimoroni::PicoDisplay2::LED_R, pimoroni::PicoDisplay2::LED_G, pimoroni::PicoDisplay2::LED_B);
+//, pimoroni::Polarity::ACTIVE_LOW, 0);
 
 const display::RGB PALETTE[16] = {
   {0, 0, 0},
@@ -187,5 +187,5 @@ const uint16_t* display::line(uint16_t y)
 
 void display::rgb_led(byte r, byte g, byte b)
 {
-  led.set_rgb(0, 63, 0);
+  led.set_rgb(r, g, b);
 }

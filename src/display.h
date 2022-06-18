@@ -19,6 +19,5 @@ void render();
 const uint16_t* line(uint16_t y);
 
 void rgb_led(byte r, byte g, byte b);
-//void rgb_led(byte r, byte g, byte b);
 
 }

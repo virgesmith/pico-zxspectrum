@@ -12,7 +12,6 @@ extern byte ram[0xC000];
 
 void init();
 void step();
-void start();
 void input();
 
 }
