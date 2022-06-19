@@ -1,9 +1,7 @@
 #pragma once
 
+#include "types.h"
 #include "tft_t_dma.h"
-
-#include <cstdint>
-typedef uint8_t byte;
 
 namespace display
 {
@@ -15,9 +13,11 @@ struct RGB { byte R,G,B; };
 
 extern byte bordercolor;
 
-void init(byte* VRAM); // ==Z80RAM
+void init();
 void toggle_vbl();
 void render();
 const uint16_t* line(uint16_t y);
+
+void rgb_led(byte r, byte g, byte b);
 
 }

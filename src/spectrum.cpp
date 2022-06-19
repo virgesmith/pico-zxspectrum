@@ -3,6 +3,7 @@
 #include "spectrum_rom.h"
 #include "sound.h"
 #include "display.h"
+#include "buttons.h"
 #include "keyboard.h"
 #include "loader.h"
 #include "serial.h"
@@ -52,21 +53,19 @@ HWOptions hwopt = { 0xFF }; //, 24, 128, 24, 48, 224, 16, 48, 192, 48, 8 };
 }
 
 
-
-void spectrum::start()
+void spectrum::init()
 {
+  memset(spectrum::ram, 0, sizeof(spectrum::ram));
+  ResetZ80(&spectrum::z80, CYCLES_PER_FRAME);
+
   Command mode = serial::wait_command();
 
   if ((mode == Command::LOAD_SNA) | (mode == Command::LOAD_Z80))
     serial::read_img(mode);
 
   sound::init();
-}
 
-void spectrum::init()
-{
-  memset(spectrum::ram, 0, sizeof(spectrum::ram));
-  ResetZ80(&spectrum::z80, CYCLES_PER_FRAME);
+  display::rgb_led(0, 128, 0);
 }
 
 

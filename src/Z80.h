@@ -13,14 +13,14 @@
 #ifndef Z80_H
 #define Z80_H
 
- #include <stdint.h>
-
-
-#define  EXECZ80 // run a few cycles
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdint.h>
+
+#define  EXECZ80 // run a few cycles
 
                                /* Compilation options:       */
 /* #define DEBUG */            /* Compile debugging version  */

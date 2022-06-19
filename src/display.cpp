@@ -1,4 +1,8 @@
 #include "display.h"
+#include "spectrum.h"
+
+#include "drivers/rgbled/rgbled.hpp"
+#include "libraries/pico_display_2/pico_display_2.hpp"
 
 #include <cstring>
 
@@ -24,15 +28,18 @@ volatile bool vbl = true;
 
 TFT_T_DMA tft;
 
+pimoroni::RGBLED led(pimoroni::PicoDisplay2::LED_R, pimoroni::PicoDisplay2::LED_G, pimoroni::PicoDisplay2::LED_B);
+//, pimoroni::Polarity::ACTIVE_LOW, 0);
+
 const display::RGB PALETTE[16] = {
   {0, 0, 0},
-  {0, 0, 205},
-  {205, 0, 0},
-  {205, 0, 205},
-  {0, 205, 0},
-  {0, 205, 205},
-  {205, 205, 0},
-  {212, 212, 212},
+  {0, 0, 192},
+  {192, 0, 0},
+  {192, 0, 192},
+  {0, 192, 0},
+  {0, 192, 192},
+  {192, 192, 0},
+  {192, 192, 192},
   {0, 0, 0},
   {0, 0, 255},
   {255, 0, 0},
@@ -43,10 +50,29 @@ const display::RGB PALETTE[16] = {
   {255, 255, 255}
 };
 
+// const display::RGB PALETTE[16] = {
+//   {0, 0, 0},
+//   {0, 0, 205},
+//   {205, 0, 0},
+//   {205, 0, 205},
+//   {0, 205, 0},
+//   {0, 205, 205},
+//   {205, 205, 0},
+//   {212, 212, 212},
+//   {0, 0, 0},
+//   {0, 0, 255},
+//   {255, 0, 0},
+//   {255, 0, 255},
+//   {0, 255, 0},
+//   {0, 255, 255},
+//   {255, 255, 0},
+//   {255, 255, 255}
+// };
+
+
 // map zx spectrum colour codes to 5+6+5 bit RGB
 uint16_t palette16[PALETTE_SIZE];
 
-byte* volatile VRAM; // pass in to ctor...
 byte scanline_buffer[SCREEN_WIDTH]; // TODO use tft getlinebuffer? uint16_t* tft.getLineBuffer(line);
 
 void drawLine(byte *VBuf, int width, int height, int line)
@@ -86,8 +112,8 @@ void displayScanline(int y, int f_flash)
 
   for (int x = 0; x < 32; ++x)
   {
-    pixel = VRAM[dir_p++];
-    attr = VRAM[dir_a++];
+    pixel = spectrum::ram[dir_p++];
+    attr = spectrum::ram[dir_a++];
 
     if (((attr & 0x80) == 0) || (f_flash == 0))
     {
@@ -119,10 +145,8 @@ void displayScanline(int y, int f_flash)
 byte display::bordercolor;
 
 
-void display::init(byte* const pram)
+void display::init()
 {
-  VRAM = pram;
-
   for (size_t i = 0; i < 16; ++i)
     palette16[i] = RGBVAL16(PALETTE[i].R, PALETTE[i].G, PALETTE[i].B);
 
@@ -158,4 +182,10 @@ void display::render()
 const uint16_t* display::line(uint16_t y)
 {
   return tft.getLineBuffer(y);
+}
+
+
+void display::rgb_led(byte r, byte g, byte b)
+{
+  led.set_rgb(r, g, b);
 }

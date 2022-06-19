@@ -33,7 +33,6 @@ void keyboard::readUsbSerial(byte (&kbd_ram)[8])
     case Command::LOAD_Z80:
       {
         serial::read_img(c);
-        //loader::reset_pending = true;
       }
     default:
       break;
