@@ -1,11 +1,12 @@
 from __future__ import annotations
-from pynput.keyboard import Key, KeyCode, Listener
-from serial import Serial
+from typing import Optional
+from pynput.keyboard import Key, KeyCode, Listener  # type: ignore
+from serial import Serial  # type: ignore
 from pathlib import Path
 from datetime import datetime
-import sys
+import typer
 import numpy as np
-from PIL import Image
+from PIL import Image  # type: ignore
 
 DEVICE = "/dev/ttyACM0"
 BAUD_RATE = 115200
@@ -116,7 +117,7 @@ keymap = {
 
 # enum class Command: byte { KEYSTROKE, SAVE, RESET, LOAD_SNA, LOAD_Z80, NONE=255 };
 
-def get_mode(filename: str | None) -> int:
+def get_mode(filename: str) -> int:
   # values must correspond with enum in keyboard.h
   if filename.endswith(".z80"):
     return 4
@@ -129,7 +130,7 @@ def get_mode(filename: str | None) -> int:
 WIDTH = 320
 HEIGHT = 240
 
-def to_rgb(raw: bytes) -> list[tuple]:
+def to_rgb(raw: bytes) -> np.ndarray: # [int, np.dtype[int]]:
   img = np.empty((HEIGHT, WIDTH, 3), dtype=np.uint8)
 
   for i in range(0, len(raw), 2):
@@ -142,8 +143,6 @@ def to_rgb(raw: bytes) -> list[tuple]:
     img[y, x] = [r, g, b]
 
   return img
-
-
 
 
 def upload_image(zxspectrum: Serial, filename: str) -> None:
@@ -178,9 +177,9 @@ def get_screenshot(zxspectrum: Serial) -> None:
   filename = f'zx{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}.png'
   with open(filename, "wb") as fh:
     hex = zxspectrum.readline().rstrip().decode("utf-8")
-    img = to_rgb(bytes.fromhex(hex))
+    raw = to_rgb(bytes.fromhex(hex))
 
-    img = Image.fromarray(img, "RGB")
+    img = Image.fromarray(raw, "RGB")
     img.save(filename)
     print(f"wrote image to {filename}")
 
@@ -189,35 +188,35 @@ def reset(zxspectrum: Serial) -> None:
   zxspectrum.write((2).to_bytes(1, 'little'))
 
 
-def main(filename: str | None) -> None:
+def main(filename: Optional[str] = typer.Argument(None, help="a .z80 or .sna format image to load at startup")) -> None:
+  """Start the ZX Spectrum emulator
+
+  PrtScr saves a screenshot
+
+  Ins saves a snapshot
+
+  Del resets machine to last snapshot
+  """
   if not Path(DEVICE).exists:
     raise FileNotFoundError("usb device not found")
   zxspectrum = Serial(DEVICE, BAUD_RATE)
+
+  print("esc, ctrl-C to exit")
 
   kbd_ram = bytearray.fromhex("ffffffffffffffff")
 
   def on_press(key: Key) -> None:
     if key == Key.esc:
       exit(0)
-
     if key == Key.print_screen:
       get_screenshot(zxspectrum)
       return
-
     if key == Key.insert:
       get_snapshot(zxspectrum)
       return
-
     if key == Key.delete:
       reset(zxspectrum)
       return
-
-    # if key == Key.insert:
-    #   if filename:
-    #     upload_image(zxspectrum, filename)
-    #   else:
-    #     print("no image selected")
-    #   return
 
     codes = keymap.get(key, ())
     if not codes:
@@ -249,19 +248,8 @@ def main(filename: str | None) -> None:
 
   with Listener(on_press=on_press, on_release=on_release, suppress=True) as listener:
     while True:
-      #c0, t0, c1, t1 = [b for b in device.read(4)]
-      #print(f"{c0}, {t0}, {c1}, {t1}")
-      #b = zxspectrum.read(3)
-      # print(f"{int.from_bytes(b[0], 'big')}, {int.from_bytes(b[1], 'big')}, {int.from_bytes(b[2]), 'big'}")
-      #print(f"{b[0]}, {b[1]}, {b[2]}")
       listener.join()
 
 
 if __name__ == "__main__":
-  print("esc, ctrl-C to exit")
-  if len(sys.argv) > 1:
-    filename = sys.argv[1]
-  else:
-    filename = None
-  main(filename)
-
+  typer.run(main)

@@ -65,7 +65,7 @@ void spectrum::init()
 
   sound::init();
 
-  display::rgb_led(0, 128, 0);
+  display::rgb_led(0, 64, 0);
 }
 
 
@@ -84,20 +84,26 @@ void spectrum::step()
 
   if (loader::snapshot_pending)
   {
+    display::rgb_led(32, 0, 32);
     serial::write_z80();
     loader::snapshot_pending = false;
+    display::rgb_led(0, 64, 0);
   }
 
   if (loader::screenshot_pending)
   {
+    display::rgb_led(0, 0, 64);
     serial::write_screen();
     loader::screenshot_pending = false;
+    display::rgb_led(0, 64, 0);
   }
 
   if (loader::reset_pending)
   {
+    display::rgb_led(64, 0, 0);
     loader::load_image_z80(spectrum::z80);
     loader::reset_pending = false;
+    display::rgb_led(0, 64, 0);
   }
 
   IntZ80(&z80, INT_IRQ); // must be called every 20ms
@@ -120,6 +126,26 @@ void spectrum::step()
 
 void spectrum::input()
 {
+  // client-side driver isn't expecting the data back...
+  // if (button::pressed(button::Id::A))
+  // {
+  //   loader::snapshot_pending = true;
+  // }
+
+  // if (button::pressed(button::Id::B))
+  // {
+  //   loader::screenshot_pending = true;
+  // }
+
+  if (button::pressed(button::Id::X))
+  {
+    loader::reset_pending = true;
+  }
+
+  // if (button::pressed(button::Id::Y))
+  // {
+  // }
+
   keyboard::readUsbSerial(key_ram);
 }
 

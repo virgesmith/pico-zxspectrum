@@ -14,16 +14,6 @@
 
 bool repeating_timer_callback(struct repeating_timer* t)
 {
-  if (button::pressed(button::Id::A))
-  {
-    display::rgb_led(63, 0, 0);
-  }
-
-  if (button::pressed(button::Id::B))
-  {
-    display::rgb_led(0, 0, 63);
-  }
-
   spectrum::input();
   display::toggle_vbl();
   return true;

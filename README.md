@@ -57,9 +57,9 @@ Keys map closely to the ZX Spectrum keyboard (below), with `LShift`as caps shift
 
 `PrtScr` triggers an screenshot save (png format)
 
-`Ins` triggers an image (registers and RAM) save (Z80 format)
+`Ins` triggers an image save (registers and RAM in Z80 format)
 
-`Del` resets the device to the last image saved (if created), the image at startup (if supplied), or ZX basic.
+`Del` or the screen's `X` button resets the device to the last image loaded/saved, or ZX basic.
 
 `Esc` followed by `Ctrl+C` exits the keyboard listener.
 

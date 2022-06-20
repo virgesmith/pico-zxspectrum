@@ -6,3 +6,4 @@ pico_sdk_import.cmake
 *.tzx
 *.z80
 pimoroni-pico
+data/
