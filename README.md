@@ -25,12 +25,29 @@ So for old times' sake here's a ZX Spectrum emulator for the [Raspberry Pi pico]
 ![chegg](./doc/chegg.png) ![manic](./doc/manic.png)
 
 
-## Build
+## Dependencies
 
 Requires [pico-sdk](https://github.com/raspberrypi/pico-sdk) (and its dependencies e.g. tinyUSB...), plus the [pimoroni-pico](https://github.com/pimoroni/pimoroni-pico) libraries. In the repo root:
 
+Ensure tinyUSB sources are present in the `lib` subdir of the SDK (extract or symlink to a release here, or use git submodules), e.g.
+
 ```sh
+cd pico-sdk-1.4.0/lib
+rmdir tinyusb # will be empty initially
+ln -s ../../tinyusb-0.13.0 tinyusb
+```
+
+## Configuration
+
+```sh
+ln -s ../pico-sdk-1.4.0 pico-sdk # adjust version and location as necessary
+ln -s pico-sdk/external/pico_sdk_import.cmake
 ln -s ../pimoroni-pico # adjust to wherever you cloned it to
+```
+
+## Build
+
+```sh
 mkdir -p build && cd build
 export PICO_SDK_PATH=../../pico-sdk # adjust as necessary
 cmake ..
