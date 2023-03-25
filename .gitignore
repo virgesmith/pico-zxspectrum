@@ -1,10 +1,11 @@
-build
+build*/
 .venv*
+.vscode/
 pico_sdk_import.cmake
+pimoroni-pico
+pico-sdk
 *.rom
 *.sna
 *.tzx
 *.z80
-pimoroni-pico
 data/
-pico-sdk

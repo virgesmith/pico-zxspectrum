@@ -37,6 +37,8 @@ rmdir tinyusb # will be empty initially
 ln -s ../../tinyusb-0.13.0 tinyusb
 ```
 
+*Update 2023/03*: works with pico-sdk-1.5.0 but not tinyusb-0.15, which seems to require more RAM than earlier versions.
+
 ## Configuration
 
 ```sh
@@ -49,7 +51,7 @@ ln -s ../pimoroni-pico # adjust to wherever you cloned it to
 
 ```sh
 mkdir -p build && cd build
-export PICO_SDK_PATH=../../pico-sdk # adjust as necessary
+export PICO_SDK_PATH=../pico-sdk # adjust as necessary
 cmake ..
 make -j
 ```
@@ -61,6 +63,8 @@ Something like (from the repo root):
 ```sh
 cp build/picozxspectrum.uf2 /media/$USER/RPI-RP2/
 ```
+
+You should see at this point a blank screen and the LED bright white.
 
 ## Use
 
