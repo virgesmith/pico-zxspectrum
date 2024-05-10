@@ -9,9 +9,10 @@
 /**                                                         **/
 /** Copyright (C) Marat Fayzullin 1994-2007                 **/
 /**     You are not allowed to distribute this software     **/
-/**     commercially. Please, notify me, if you make any    **/   
+/**     commercially. Please, notify me, if you make any    **/
 /**     changes to this file.                               **/
 /*************************************************************/
+#pragma once
 
 static const byte Cycles[256] =
 {
@@ -30,7 +31,7 @@ static const byte Cycles[256] =
    5,10,10,10,10,11, 7,11, 5,10,10, 0,10,17, 7,11,
    5,10,10,11,10,11, 7,11, 5, 4,10,11,10, 0, 7,11,
    5,10,10,19,10,11, 7,11, 5, 4,10, 4,10, 0, 7,11,
-   5,10,10, 4,10,11, 7,11, 5, 6,10, 4,10, 0, 7,11 
+   5,10,10, 4,10,11, 7,11, 5, 6,10, 4,10, 0, 7,11
 };
 
 static const byte CyclesCB[256] =
@@ -50,7 +51,7 @@ static const byte CyclesCB[256] =
    8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8,
    8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8,
    8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8,
-   8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8 
+   8, 8, 8, 8, 8, 8,15, 8, 8, 8, 8, 8, 8, 8,15, 8
 };
 
 static const byte CyclesED[256] =

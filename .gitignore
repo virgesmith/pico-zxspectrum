@@ -8,4 +8,5 @@ pico-sdk
 *.sna
 *.tzx
 *.z80
+*.png
 data/

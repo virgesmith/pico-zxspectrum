@@ -336,7 +336,7 @@ static void CodesCB(Z80 *R)
   R->ICount-=CyclesCB[I];
   switch(I)
   {
-#include "CodesCB.h"
+#include "CodesCB.inl"
     default:
       if(R->TrapBadOps)
         printf
@@ -358,7 +358,7 @@ static void CodesDDCB(Z80 *R)
   R->ICount-=CyclesXXCB[I];
   switch(I)
   {
-#include "CodesXCB.h"
+#include "CodesXCB.inl"
     default:
       if(R->TrapBadOps)
         printf
@@ -381,7 +381,7 @@ static void CodesFDCB(Z80 *R)
   R->ICount-=CyclesXXCB[I];
   switch(I)
   {
-#include "CodesXCB.h"
+#include "CodesXCB.inl"
     default:
       if(R->TrapBadOps)
         printf
@@ -402,7 +402,7 @@ static void CodesED(Z80 *R)
   R->ICount-=CyclesED[I];
   switch(I)
   {
-#include "CodesED.h"
+#include "CodesED.inl"
     case PFX_ED:
       R->PC.W--;break;
     default:
@@ -425,7 +425,7 @@ static void CodesDD(Z80 *R)
   R->ICount-=CyclesXX[I];
   switch(I)
   {
-#include "CodesXX.h"
+#include "CodesXX.inl"
     case PFX_FD:
     case PFX_DD:
       R->PC.W--;break;
@@ -452,7 +452,7 @@ static void CodesFD(Z80 *R)
   R->ICount-=CyclesXX[I];
   switch(I)
   {
-#include "CodesXX.h"
+#include "CodesXX.inl"
     case PFX_FD:
     case PFX_DD:
       R->PC.W--;break;
@@ -572,7 +572,7 @@ int ExecZ80(Z80 *R,int RunCycles)
       /* Interpret opcode */
       switch(I)
       {
-#include "Codes.h"
+#include "Codes.inl"
         case PFX_CB: CodesCB(R);break;
         case PFX_ED: CodesED(R);break;
         case PFX_FD: CodesFD(R);break;
