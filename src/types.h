@@ -2,5 +2,5 @@
 
 #include <cstdint>
 
-typedef uint8_t byte;
-typedef uint16_t addr;
+using byte = uint8_t;
+using addr = uint16_t;

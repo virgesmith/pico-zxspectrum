@@ -1,9 +1,8 @@
 #pragma once
 
 #include "Z80.h"
-#include "types.h"
 #include "pico/time.h"
-
+#include "types.h"
 
 namespace spectrum {
 
@@ -14,4 +13,4 @@ void init();
 void step();
 void input();
 
-}
+} // namespace spectrum

@@ -2,8 +2,7 @@
 
 #include "keyboard.h"
 
-namespace serial
-{
+namespace serial {
 
 // check if a command has been issued
 Command pop_command();
@@ -19,4 +18,4 @@ void write_z80();
 
 void write_screen();
 
-}
+} // namespace serial

@@ -53,19 +53,18 @@ make: *** [Makefile:91: all] Error 2
 
 ## Configuration
 
-Symlink Pico SDK and Pimoroni Pico:
+Edit CMakeLists to point to locations of Pico SDK and Pimoroni Pico library, e.g.
 
-```sh
-ln -s ../pico-sdk-1.5.1 pico-sdk # adjust version and location as necessary
-ln -s pico-sdk/external/pico_sdk_import.cmake
-ln -s ../pimoroni-pico # adjust to wherever you cloned it to
-```
+set(PICO_SDK_PATH ../../pico-sdk-1.5.1_tusb-0.14) # NB relative to build dir
+set(PIMORONI_PATH ../pimoroni-pico) # NB relative to project root
+
+Set PICO_TOOLCHAIN_PATH if needed.
 
 ## Build
 
 ```sh
 mkdir -p build && cd build
-cmake -DPICO_SDK=../pico_sdk ..
+cmake -DPICO_SDK_PATH=../pico_sdk ..
 make -j
 ```
 
